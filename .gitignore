@@ -55,5 +55,9 @@ dist/
 修复PowerShell执行策略.ps1
 
 # Personal test data (uncomment if you don't want to share)
-# 双龙大道-天元路.pdf
-# 双龙大道-天元路.txt
+双龙大道-天元路.pdf
+双龙大道-天元路.txt
+测试数据_6路.pdf
+
+# Temporary documentation files
+清理已上传文件说明.md
