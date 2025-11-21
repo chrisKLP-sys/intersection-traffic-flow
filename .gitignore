@@ -61,3 +61,6 @@ dist/
 
 # Temporary documentation files
 清理已上传文件说明.md
+
+# Local files folder (contains files that should not be uploaded to GitHub)
+_local_files/
