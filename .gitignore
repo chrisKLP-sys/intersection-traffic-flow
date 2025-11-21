@@ -1,0 +1,59 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+*.egg
+
+# Virtual Environment
+venv/
+env/
+ENV/
+.venv
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# PyInstaller
+*.spec.bak
+*.exe
+*.dmg
+*.app
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Project specific
+build/
+dist/
+*.log
+
+# Test files (optional - uncomment if you want to ignore test outputs)
+# test_output/
+# *.test
+
+# Temporary files
+*.tmp
+*.temp
+~$*
+
+# Backup files
+*.bak
+*.backup
+
+# PowerShell
+修复PowerShell执行策略.ps1
+
+# Personal test data (uncomment if you don't want to share)
+# 双龙大道-天元路.pdf
+# 双龙大道-天元路.txt
