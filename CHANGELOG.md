@@ -12,8 +12,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-<<<<<<< Updated upstream
-=======
 ## [1.3.0] - 2025-11-22
 
 **🎉 Stable Release / 稳定版本发布**
@@ -49,8 +47,6 @@ This is a stable release with new features and improvements. Recommended for pro
     - 颜色：与出口宽度条颜色一致
 
 ---
-
->>>>>>> Stashed changes
 ## [1.2.0] - 2025-11-22
 
 ### Fixed / 修复
