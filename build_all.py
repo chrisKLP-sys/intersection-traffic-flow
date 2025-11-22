@@ -160,6 +160,114 @@ def get_system_info():
     
     return info
 
+def create_version_rc_file(version_txt_file, rc_file):
+    """从version_info.txt创建.rc文件（Windows资源文件）"""
+    try:
+        # 读取version_info.txt内容
+        with open(version_txt_file, 'r', encoding='utf-8') as f:
+            content = f.read()
+        
+        # 解析版本信息
+        import re
+        # 提取版本号
+        filevers_match = re.search(r'filevers=\((\d+),\s*(\d+),\s*(\d+),\s*(\d+)\)', content)
+        prodvers_match = re.search(r'prodvers=\((\d+),\s*(\d+),\s*(\d+),\s*(\d+)\)', content)
+        
+        # 提取字符串信息（使用更宽松的正则表达式，支持中文字符）
+        # 匹配 u'...' 或 '...' 格式的字符串，支持中文字符和特殊字符
+        def extract_string(key, default):
+            # 匹配 StringStruct(u'Key', u'Value') 或 StringStruct('Key', 'Value') 格式
+            # 使用非贪婪匹配，匹配到下一个 StringStruct 或 ] 为止
+            patterns = [
+                rf"StringStruct\([u]?'{key}',\s*[u]?'([^']+)'\)",  # 简单字符串（无转义）
+                rf"StringStruct\([u]?'{key}',\s*[u]?\"([^\"]+)\"\)",  # 使用双引号
+            ]
+            for pattern in patterns:
+                match = re.search(pattern, content)
+                if match:
+                    return match.group(1)
+            return default
+        
+        company = extract_string("CompanyName", "chrisKLP-sys")
+        description = extract_string("FileDescription", "交叉口交通流量流向可视化工具")
+        copyright = extract_string("LegalCopyright", "Copyright (c) 2025 交叉口交通流量流向可视化工具")
+        product = extract_string("ProductName", "交叉口交通流量流向可视化工具")
+        comments = extract_string("Comments", "https://github.com/chrisKLP-sys/intersection-traffic-flow")
+        
+        if filevers_match:
+            filevers = f"{filevers_match.group(1)},{filevers_match.group(2)},{filevers_match.group(3)},{filevers_match.group(4)}"
+        else:
+            filevers = "1,2,0,0"
+        
+        if prodvers_match:
+            prodvers = f"{prodvers_match.group(1)},{prodvers_match.group(2)},{prodvers_match.group(3)},{prodvers_match.group(4)}"
+        else:
+            prodvers = "1,2,0,0"
+        
+        # 转义.rc文件中的特殊字符
+        def escape_rc_string(s):
+            # 转义双引号和反斜杠
+            return s.replace('\\', '\\\\').replace('"', '\\"')
+        
+        # 创建.rc文件内容
+        rc_content = f"""#include <winver.h>
+
+VS_VERSION_INFO VERSIONINFO
+FILEVERSION {filevers}
+PRODUCTVERSION {prodvers}
+FILEFLAGSMASK 0x3fL
+FILEFLAGS 0x0L
+FILEOS 0x40004L
+FILETYPE 0x1L
+FILESUBTYPE 0x0L
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "040904B0"
+        BEGIN
+            VALUE "CompanyName", "{escape_rc_string(company)}"
+            VALUE "FileDescription", "{escape_rc_string(description)}"
+            VALUE "FileVersion", "{filevers.replace(',', '.')}"
+            VALUE "InternalName", "{escape_rc_string(product)}"
+            VALUE "LegalCopyright", "{escape_rc_string(copyright)}"
+            VALUE "OriginalFilename", "{escape_rc_string(product)}.exe"
+            VALUE "ProductName", "{escape_rc_string(product)}"
+            VALUE "ProductVersion", "{prodvers.replace(',', '.')}"
+            VALUE "Comments", "{escape_rc_string(comments)}"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x409, 1200
+    END
+END
+"""
+        
+        # 写入.rc文件
+        # Windows资源编译器通常需要UTF-16 LE编码，但PyInstaller可能支持UTF-8 with BOM
+        # 先尝试UTF-8 with BOM
+        try:
+            with open(rc_file, 'wb') as f:
+                # 写入UTF-8 BOM
+                f.write(b'\xef\xbb\xbf')
+                # 写入UTF-8编码的内容
+                f.write(rc_content.encode('utf-8'))
+        except Exception as e:
+            # 如果失败，尝试UTF-16 LE（Windows资源编译器标准格式）
+            print(f"  ⚠ UTF-8编码失败，尝试UTF-16 LE: {e}")
+            with open(rc_file, 'wb') as f:
+                # 写入UTF-16 LE BOM
+                f.write(b'\xff\xfe')
+                # 写入UTF-16 LE编码的内容
+                f.write(rc_content.encode('utf-16-le'))
+        
+        return True
+    except Exception as e:
+        print(f"  ⚠ 创建.rc文件时出错: {e}")
+        import traceback
+        traceback.print_exc()
+        return False
+
 def build_application():
     """执行打包"""
     print_step(3, 5, "开始打包...")
@@ -170,7 +278,7 @@ def build_application():
     print(f"  检测到系统: {system} ({system_info['machine']})")
     
     # 自动检测主文件（优先使用最新版本）
-    main_files = ['交叉口流量绘制1.2.py', '交叉口流量绘制1.1.py', '交叉口流量绘制1.0.py', 'Alpha1.0.py']
+    main_files = ['交叉口交通流量流向可视化工具1.2.py', '交叉口流量绘制1.1.py', '交叉口流量绘制1.0.py', 'Alpha1.0.py']
     main_file = None
     for file in main_files:
         if os.path.exists(file):
@@ -231,7 +339,7 @@ def build_application():
         '--clean',
         '--noconfirm',
         '--onefile',
-        '--name', '交叉口流量绘制',
+        '--name', '交叉口交通流量流向可视化工具',
         main_file
     ]
     
@@ -239,6 +347,16 @@ def build_application():
     if icon_file and system == 'Windows':
         cmd.extend(['--icon', icon_file])
         print(f"  ✓ 使用图标: {icon_file}")
+    
+    # 添加版本信息（仅Windows）
+    # PyInstaller的--version-file参数期望version_info.txt格式（Python代码格式），而不是.rc文件
+    if system == 'Windows':
+        version_file = 'version_info.txt'
+        if os.path.exists(version_file):
+            cmd.extend(['--version-file', version_file])
+            print(f"  ✓ 使用版本信息: {version_file}")
+        else:
+            print(f"  ⚠ 未找到版本信息文件: {version_file}")
     
     # macOS 特殊处理
     if system == 'Darwin':
@@ -311,9 +429,9 @@ def verify_build():
     system = platform.system()
     
     if system == 'Windows':
-        exe_path = os.path.join('dist', '交叉口流量绘制.exe')
+        exe_path = os.path.join('dist', '交叉口交通流量流向可视化工具.exe')
     else:
-        exe_path = os.path.join('dist', '交叉口流量绘制')
+        exe_path = os.path.join('dist', '交叉口交通流量流向可视化工具')
     
     if os.path.exists(exe_path):
         file_size = os.path.getsize(exe_path)
@@ -380,7 +498,7 @@ def show_summary(exe_path, system_info):
         else:
             print("\n使用方法:")
             print(f"  1. 找到文件: {exe_path}")
-            print("  2. 在终端中运行: ./dist/交叉口流量绘制")
+            print("  2. 在终端中运行: ./dist/交叉口交通流量流向可视化工具")
             print("  3. 或右键点击 -> 打开")
             print("\n如果提示'无法打开'，请运行:")
             print(f"  xattr -cr {exe_path}")
@@ -394,14 +512,14 @@ def show_summary(exe_path, system_info):
 
 def main():
     """主函数"""
-    print_header("交叉口流量绘制 - 统一打包脚本")
+    print_header("交叉口交通流量流向可视化工具 - 统一打包脚本")
     
     # 检查 Python 版本
     if not check_python_version():
         sys.exit(1)
     
     # 检查是否在项目目录，自动检测主文件（优先使用最新版本）
-    main_files = ['交叉口流量绘制1.2.py', '交叉口流量绘制1.1.py', '交叉口流量绘制1.0.py', 'Alpha1.0.py']
+    main_files = ['交叉口交通流量流向可视化工具1.2.py', '交叉口流量绘制1.1.py', '交叉口流量绘制1.0.py', 'Alpha1.0.py']
     main_file = None
     for file in main_files:
         if os.path.exists(file):

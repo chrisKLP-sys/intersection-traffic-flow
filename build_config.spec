@@ -26,8 +26,8 @@ if os.path.exists('app_icon.png'):
     datas_list.append(('app_icon.png', '.'))
 
 # 自动检测主文件
-main_files = ['交叉口流量绘制1.2.py', '交叉口流量绘制1.1.py', '交叉口流量绘制1.0.py', 'Alpha1.0.py']
-main_file = '交叉口流量绘制1.2.py'  # 默认值
+main_files = ['交叉口交通流量流向可视化工具1.2.py', '交叉口流量绘制1.1.py', '交叉口流量绘制1.0.py', 'Alpha1.0.py']
+main_file = '交叉口交通流量流向可视化工具1.2.py'  # 默认值
 for file in main_files:
     if os.path.exists(file):
         main_file = file
@@ -87,6 +87,12 @@ icon_file = None
 if os.path.exists('app_icon.ico'):
     icon_file = 'app_icon.ico'
 
+# 检查版本信息文件（仅Windows）
+# PyInstaller的version参数期望version_info.txt格式（Python代码格式），而不是.rc文件
+version_file = None
+if os.path.exists('version_info.txt'):
+    version_file = 'version_info.txt'
+
 exe = EXE(
     pyz,
     a.scripts,
@@ -94,7 +100,7 @@ exe = EXE(
     a.zipfiles,
     a.datas,
     [],
-    name='交叉口流量绘制',
+    name='交叉口交通流量流向可视化工具',
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
@@ -108,5 +114,6 @@ exe = EXE(
     codesign_identity=None,
     entitlements_file=None,
     icon=icon_file,  # 可执行文件图标
+    version=version_file,  # 版本信息文件（仅Windows）
 )
 

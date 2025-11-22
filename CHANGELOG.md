@@ -100,8 +100,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added / 新增
 
-- Initial release of 交叉口流量绘制 (Intersection Traffic Flow Visualization)
-  - 交叉口流量绘制的初始版本发布
+- Initial release of 交叉口交通流量流向可视化工具 (Intersection Traffic Flow Visualize)
+  - 交叉口交通流量流向可视化工具的初始版本发布
 - Support for 3-way, 4-way, 5-way, and 6-way intersections
   - 支持3路、4路、5路和6路交叉口
 - Interactive data input interface

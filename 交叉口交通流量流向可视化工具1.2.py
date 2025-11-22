@@ -356,6 +356,10 @@ class Table(tk.Frame):
             label.grid(row=1, column=column, padx=5, pady=5, sticky='w')  # 改为row=1，因为提示标签占用了row=0
 
         # 生成数据行（根据路数）
+        # 计算方位角默认值（0-360度平均分布）
+        angle_step = 360.0 / num_entries
+        default_angles = [i * angle_step for i in range(num_entries)]
+        
         for row in range(1, num_entries + 1):
             current_row = []
             direction = ttk.Label(self, text=f'进口{row}')
@@ -364,6 +368,10 @@ class Table(tk.Frame):
                 entry = ttk.Entry(self, width=10)
                 entry.bind('<KeyRelease>', self.mark_modified)
                 entry.grid(row=row+1, column=column, padx=5, pady=5)  # row+1因为表头在row=1
+                # 如果是方位角列（第3列，索引为2），设置默认值
+                if column == 2:  # 方位角列（column 0是进口编号，column 1是进口名称，column 2是方位角）
+                    default_angle = default_angles[row - 1]  # row从1开始，所以减1
+                    entry.insert(0, str(int(default_angle)) if default_angle == int(default_angle) else str(default_angle))
                 current_row.append(entry)
             self._widgets.append(current_row)
     
@@ -572,9 +580,9 @@ def update_window_title():
             update_window_title.root.title(file_name_without_ext)
     else:
         if table.is_modified:
-            update_window_title.root.title("交叉口流量 - 未保存")
+            update_window_title.root.title("交叉口交通流量流向可视化工具 - 未保存")
         else:
-            update_window_title.root.title("交叉口流量")
+            update_window_title.root.title("交叉口交通流量流向可视化工具")
 
 def load_data_from_file(file_name, table_instance, root_instance):
     """从文件加载数据的内部函数"""
@@ -943,10 +951,19 @@ def on_new_file_click():
         root.update()
         adjust_window_size(root)
     
-    # 清空数据
-    for row in table._widgets:
-        for widget in row:
+    # 清空数据并设置默认方位角
+    # 计算方位角默认值（0-360度平均分布）
+    angle_step = 360.0 / num_entries
+    default_angles = [i * angle_step for i in range(num_entries)]
+    
+    for row_idx, row in enumerate(table._widgets):
+        for col_idx, widget in enumerate(row):
             widget.delete(0, tk.END)
+            # 如果是方位角列（第2列，索引为1），设置默认值
+            # 注意：在_widgets中，col_idx=0对应进口名称，col_idx=1对应方位角
+            if col_idx == 1:  # 方位角列
+                default_angle = default_angles[row_idx]
+                widget.insert(0, str(int(default_angle)) if default_angle == int(default_angle) else str(default_angle))
     table.file_name = None
     table.is_modified = False
     update_window_title()
@@ -954,7 +971,7 @@ def on_new_file_click():
 
 
 def show_about():
-    about_text = "版权所有 (C) \n\n本软件由 [江浦马保国] 开发，保留所有权利。\n欢迎复制、传播本软件。"
+    about_text = "交叉口交通流量流向可视化工具\nIntersection Traffic Flow Visualize\n\n版权所有 (C) \n\n本软件由 [江浦马保国] 开发，保留所有权利。\n欢迎复制、传播本软件。"
     messagebox.showinfo("关于", about_text)
 
 def show_help():
@@ -1665,6 +1682,19 @@ def draw_text(ax, text, fontsize, center, angle, color, fontname=None):
         # 如果路径不存在，尝试使用字体名称
         font_prop = fm.FontProperties(family=fontname, size=fontsize)
     
+    # 确保center是numpy数组或可以转换为标量的值
+    if isinstance(center, (list, tuple)):
+        center = np.array(center, dtype=float)
+    elif not isinstance(center, np.ndarray):
+        center = np.array([float(center[0]), float(center[1])])
+    
+    # 确保center是1D数组，并提取标量值
+    center = np.asarray(center).flatten()
+    if len(center) < 2:
+        raise ValueError(f"center must have at least 2 elements, got {center}")
+    center_x = float(center[0])
+    center_y = float(center[1])
+    
     # 创建一个TextPath对象并指定字体
     text_path = TextPath((0, 0), text, size=fontsize, prop=font_prop)
     
@@ -1672,8 +1702,8 @@ def draw_text(ax, text, fontsize, center, angle, color, fontname=None):
     extent = text_path.get_extents()
     text_width, text_height = extent.width, extent.height
 
-    # 创建旋转和平移矩阵
-    transform = Affine2D().translate(-text_width / 2, -0.45*text_height).rotate_deg(angle).translate(center[0], center[1])
+    # 创建旋转和平移矩阵（使用标量值）
+    transform = Affine2D().translate(-text_width / 2, -0.45*text_height).rotate_deg(angle).translate(center_x, center_y)
 
     # 将TextPath对象转换为PathPatch对象
     text_patch = PathPatch(text_path, lw=0, edgecolor=None, facecolor=color, transform=transform + ax.transData)
@@ -1719,6 +1749,10 @@ def plot_traffic_flow(table_instance):
         # 截取到正确的路数
         names = names[:num_entries]
         angles = angles[:num_entries]
+        # 如果进口名称为空，使用进口编号作为默认名称
+        for i in range(num_entries):
+            if not names[i] or names[i].strip() == '':
+                names[i] = f'进口{i+1}'
         for i in range(num_entries):
             old_flows[i] = old_flows[i][:num_entries] if len(old_flows[i]) >= num_entries else old_flows[i] + [0.0] * (num_entries - len(old_flows[i]))
         
@@ -1874,7 +1908,7 @@ def plot_traffic_flow(table_instance):
             file_name = os.path.basename(table_instance.file_name)
             plot_title = os.path.splitext(file_name)[0]
         else:
-            plot_title = "交叉口流量图"
+            plot_title = "交叉口交通流量流向可视化图"
         plot_window.title(plot_title)
         
         # 将matplotlib图形嵌入到tkinter窗口
@@ -1901,7 +1935,7 @@ def plot_traffic_flow(table_instance):
             if table_instance.file_name:
                 default_name = os.path.splitext(os.path.basename(table_instance.file_name))[0]
             else:
-                default_name = "交叉口流量图"
+                default_name = "交叉口交通流量流向可视化图"
             
             # 打开保存对话框
             filename = filedialog.asksaveasfilename(
@@ -1975,7 +2009,7 @@ def plot_traffic_flow(table_instance):
 
 # 创建主窗口（先不显示）
 root = tk.Tk()
-root.title("交叉口流量")
+root.title("交叉口交通流量流向可视化工具")
 root.withdraw()  # 先隐藏窗口
 # 先设置一个临时位置（屏幕外），避免在左上角闪现
 root.geometry("1x1+-10000+-10000")

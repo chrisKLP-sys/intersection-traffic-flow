@@ -1,6 +1,6 @@
 # Contributing Guidelines
 
-Thank you for your interest in contributing to 交叉口流量绘制 (Intersection Traffic Flow Visualization)! This document provides guidelines and instructions for contributing.
+Thank you for your interest in contributing to 交叉口交通流量流向可视化工具 (Intersection Traffic Flow Visualize)! This document provides guidelines and instructions for contributing.
 
 ## Code of Conduct
 

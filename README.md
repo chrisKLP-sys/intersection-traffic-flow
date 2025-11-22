@@ -1,4 +1,4 @@
-# 交叉口流量绘制 / Intersection Traffic Flow Visualization
+# 交叉口交通流量流向可视化工具 / Intersection Traffic Flow Visualize
 
 [English](#english) | [中文](#中文)
 
@@ -73,18 +73,18 @@ pip install -r requirements.txt
 
 **Windows:**
 ```cmd
-python 交叉口流量绘制1.2.py
+python 交叉口交通流量流向可视化工具1.2.py
 ```
 
 **macOS/Linux:**
 ```bash
-python3 交叉口流量绘制1.2.py
+python3 交叉口交通流量流向可视化工具1.2.py
 ```
 
 Or if using virtual environment:
 ```bash
-venv\Scripts\python.exe 交叉口流量绘制1.2.py  # Windows
-venv/bin/python3 交叉口流量绘制1.2.py           # macOS/Linux
+venv\Scripts\python.exe 交叉口交通流量流向可视化工具1.2.py  # Windows
+venv/bin/python3 交叉口交通流量流向可视化工具1.2.py           # macOS/Linux
 ```
 
 #### Basic workflow
@@ -107,14 +107,14 @@ This will create an executable in the `dist/` directory for your platform.
 
 For more details, see the build configuration files:
 - `build_all.py` - Automated build script
-- `交叉口流量绘制.spec` - PyInstaller spec file
+- `交叉口交通流量流向可视化工具.spec` - PyInstaller spec file
 - `build_config.spec` - Alternative build configuration
 
 ### Project Structure
 
 ```
 intersection-traffic-flow/
-├── 交叉口流量绘制1.2.py      # Main application (latest)
+├── 交叉口交通流量流向可视化工具1.2.py      # Main application (latest)
 ├── 交叉口流量绘制1.1.py      # Previous version
 ├── 交叉口流量绘制1.0.py      # Older version
 ├── build_all.py              # Build script
@@ -170,7 +170,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ### Author
 
-交叉口流量绘制 Team
+交叉口交通流量流向可视化工具 Team
 
 ### Acknowledgments
 
@@ -249,18 +249,18 @@ pip install -r requirements.txt
 
 **Windows:**
 ```cmd
-python 交叉口流量绘制1.2.py
+python 交叉口交通流量流向可视化工具1.2.py
 ```
 
 **macOS/Linux:**
 ```bash
-python3 交叉口流量绘制1.2.py
+python3 交叉口交通流量流向可视化工具1.2.py
 ```
 
 如果使用虚拟环境：
 ```bash
-venv\Scripts\python.exe 交叉口流量绘制1.2.py  # Windows
-venv/bin/python3 交叉口流量绘制1.2.py           # macOS/Linux
+venv\Scripts\python.exe 交叉口交通流量流向可视化工具1.2.py  # Windows
+venv/bin/python3 交叉口交通流量流向可视化工具1.2.py           # macOS/Linux
 ```
 
 #### 基本工作流程
@@ -283,14 +283,14 @@ python build_all.py
 
 更多详细信息，请参阅构建配置文件：
 - `build_all.py` - 自动化构建脚本
-- `交叉口流量绘制.spec` - PyInstaller 配置文件
+- `交叉口交通流量流向可视化工具.spec` - PyInstaller 配置文件
 - `build_config.spec` - 替代构建配置
 
 ### 项目结构
 
 ```
 intersection-traffic-flow/
-├── 交叉口流量绘制1.2.py      # 主程序（最新版本）
+├── 交叉口交通流量流向可视化工具1.2.py      # 主程序（最新版本）
 ├── 交叉口流量绘制1.1.py      # 上一版本
 ├── 交叉口流量绘制1.0.py      # 旧版本
 ├── build_all.py              # 构建脚本
@@ -346,7 +346,7 @@ intersection-traffic-flow/
 
 ### 作者
 
-交叉口流量绘制团队
+交叉口交通流量流向可视化工具团队
 
 ### 致谢
 
@@ -364,7 +364,7 @@ intersection-traffic-flow/
 
 1. 使用批处理文件：直接运行 `激活虚拟环境.bat`
 2. 使用 CMD：运行 `venv\Scripts\activate.bat`
-3. 直接使用 Python：`venv\Scripts\python.exe 交叉口流量绘制1.2.py`
+3. 直接使用 Python：`venv\Scripts\python.exe 交叉口交通流量流向可视化工具1.2.py`
 
 更多详情请参考 `README_虚拟环境使用说明.md`。
 
