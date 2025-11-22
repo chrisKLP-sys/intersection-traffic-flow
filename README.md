@@ -4,6 +4,8 @@
 
 ---
 
+**Latest Stable Release / 最新稳定版本: [v1.2.0](https://github.com/chrisKLP-sys/intersection-traffic-flow/releases/tag/v1.2.0)** 🎉
+
 <a name="english"></a>
 ## English
 
@@ -182,6 +184,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 <a name="中文"></a>
 ## 中文
+
+**最新稳定版本: [v1.2.0](https://github.com/chrisKLP-sys/intersection-traffic-flow/releases/tag/v1.2.0)** 🎉
 
 一款专业的交通流量可视化工具，用于绘制和分析交叉口的交通流量图。本工具帮助交通工程师和规划人员可视化和分析3路、4路、5路和6路交叉口的交通模式。
 

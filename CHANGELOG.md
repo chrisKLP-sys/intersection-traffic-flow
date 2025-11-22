@@ -14,6 +14,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.2.0] - 2025-11-22
 
+**🎉 Stable Release / 稳定版本发布**
+
+This is a stable release with comprehensive bug fixes and improvements. Recommended for production use.
+这是一个稳定版本，包含全面的错误修复和改进。推荐用于生产环境。
+
 ### Fixed / 修复
 
 - Division by zero errors in geometric calculations
