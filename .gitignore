@@ -61,8 +61,16 @@ dist/
 
 # Temporary documentation files
 清理已上传文件说明.md
+移除已上传文件说明.md
+移除文件命令.txt
+git_remove_tracked_files.bat
 GitHub_Desktop操作指南*.md
 RELEASE_NOTES*.md
+
+# Git configuration files (if you don't want to upload them)
+# Uncomment the following lines if you don't want to upload these files:
+# .gitignore
+# .gitattributes
 
 # Local files folder (contains files that should not be uploaded to GitHub)
 _local_files/
