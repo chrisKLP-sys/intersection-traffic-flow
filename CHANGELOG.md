@@ -40,6 +40,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Virtual environment setup guide
 - Build and packaging instructions
 
+## [1.1.0] - 2024-11-XX
+
+### Added
+- Modern UI design with flat style buttons and improved color scheme
+- Font optimization: Support for Source Han Sans and Microsoft YaHei fonts
+- Window auto-sizing: Automatically adjusts window size based on intersection type
+- New buttons: "新建文件" (New File) and "清空数据" (Clear Data)
+- Enhanced azimuth angle warning with error troubleshooting tips
+
+### Changed
+- Improved font rendering for better screen display (Source Han Sans / Microsoft YaHei)
+- Updated UI styling with modern flat design
+- Enhanced dialog boxes with better spacing and backgrounds
+- Improved window centering and sizing logic
+
+### Fixed
+- Font loading issues on Windows systems
+- Window size adaptation for different intersection types
+- UI component font consistency
+
+### Technical Details
+- Added `setup_modern_style()` function for unified UI styling
+- Improved font loading with fallback to system fonts
+- Enhanced window management with `adjust_window_size()` function
+- Updated help documentation (v1.1)
+
 ## Future Plans
 
 ### Potential Features
@@ -63,6 +89,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Version History
 
+- **v1.1.0** - UI improvements, font optimization, window auto-sizing
 - **v1.0.0** - Initial release
 
 ---

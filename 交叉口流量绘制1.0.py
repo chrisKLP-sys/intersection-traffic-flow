@@ -158,19 +158,31 @@ class Table(tk.Frame):
                     headings.append(f'流线X_X-{i}')  # 其他流向
         
         columns = len(headings)
+        
+        # 添加方位角提示标签（醒目提示）- 在计算完列数后添加，以便正确设置columnspan
+        notice_label = tk.Label(self, 
+                                text="⚠ 注意：'方位角'以正东方向为0度，逆时针增加。例如：0度 = 正东，90度 = 正北，180度 = 正西，270度 = 正南。",
+                                bg='#fff3cd',  # 黄色背景
+                                fg='#856404',  # 深黄色文字
+                                font=('Arial', 9, 'bold'),
+                                padx=10,
+                                pady=8,
+                                relief='solid',
+                                borderwidth=1)
+        notice_label.grid(row=0, column=0, columnspan=columns, padx=5, pady=(5, 10), sticky='ew')
         for column in range(columns):
             label = ttk.Label(self, text=headings[column])
-            label.grid(row=0, column=column, padx=5, pady=5, sticky='w')
+            label.grid(row=1, column=column, padx=5, pady=5, sticky='w')  # 改为row=1，因为提示标签占用了row=0
 
         # 生成数据行（根据路数）
         for row in range(1, num_entries + 1):
             current_row = []
             direction = ttk.Label(self, text=f'进口{row}')
-            direction.grid(row=row, column=0, padx=5, pady=5, sticky='w')
+            direction.grid(row=row+1, column=0, padx=5, pady=5, sticky='w')  # row+1因为表头在row=1
             for column in range(1, columns):
                 entry = ttk.Entry(self, width=10)
                 entry.bind('<KeyRelease>', self.mark_modified)
-                entry.grid(row=row, column=column, padx=5, pady=5)
+                entry.grid(row=row+1, column=column, padx=5, pady=5)  # row+1因为表头在row=1
                 current_row.append(entry)
             self._widgets.append(current_row)
     
@@ -219,54 +231,63 @@ class Table(tk.Frame):
         else:
             print("No file to save to. Please load a file first.")
 
-def center_window(window):
-    """将窗口居中显示在当前显示器上"""
+def adjust_window_size(window):
+    """调整窗口大小以适应内容，并居中显示"""
     # 更新窗口以确保正确计算大小
     window.update_idletasks()
     window.update()
     
-    # 获取窗口尺寸 - 优先使用请求的尺寸
-    width = window.winfo_reqwidth()
-    height = window.winfo_reqheight()
+    # 计算窗口所需的最小尺寸（基于内容大小）
+    req_width = window.winfo_reqwidth()
+    req_height = window.winfo_reqheight()
     
     # 如果请求的尺寸无效，使用实际尺寸
-    if width <= 1:
-        width = window.winfo_width()
-    if height <= 1:
-        height = window.winfo_height()
+    if req_width <= 1:
+        req_width = window.winfo_width()
+    if req_height <= 1:
+        req_height = window.winfo_height()
     
     # 如果还是无效，再等待一次并重新获取
-    if width <= 1 or height <= 1:
+    if req_width <= 1 or req_height <= 1:
         window.update_idletasks()
         window.update()
-        req_width = window.winfo_reqwidth()
-        req_height = window.winfo_reqheight()
-        act_width = window.winfo_width()
-        act_height = window.winfo_height()
-        width = max(req_width, act_width) if req_width > 1 or act_width > 1 else width
-        height = max(req_height, act_height) if req_height > 1 or act_height > 1 else height
+        req_width = max(window.winfo_reqwidth(), window.winfo_width())
+        req_height = max(window.winfo_reqheight(), window.winfo_height())
     
-    # 确保尺寸有效
-    if width <= 1:
-        width = 400  # 默认宽度
-    if height <= 1:
-        height = 300  # 默认高度
+    # 添加边距（左右各20像素，上下各20像素）
+    padding = 40
+    req_width += padding
+    req_height += padding
     
-    # 获取屏幕尺寸
+    # 获取屏幕尺寸，确保窗口不超出屏幕
     screen_width = window.winfo_screenwidth()
     screen_height = window.winfo_screenheight()
     
-    # 计算居中位置（屏幕中心）
-    x = (screen_width - width) // 2
-    y = (screen_height - height) // 2
+    # 限制窗口大小不超过屏幕（留出一些边距）
+    max_width = screen_width - 40
+    max_height = screen_height - 40
+    req_width = min(req_width, max_width)
+    req_height = min(req_height, max_height)
+    
+    # 确保最小尺寸
+    req_width = max(req_width, 400)
+    req_height = max(req_height, 300)
+    
+    # 计算居中位置
+    x = (screen_width - req_width) // 2
+    y = (screen_height - req_height) // 2
     
     # 确保窗口不会超出屏幕边界
-    x = max(0, min(x, screen_width - width))
-    y = max(0, min(y, screen_height - height))
+    x = max(0, min(x, screen_width - req_width))
+    y = max(0, min(y, screen_height - req_height))
     
-    # 设置窗口位置和尺寸（总是设置完整的geometry）
-    window.geometry(f"{width}x{height}+{x}+{y}")
+    # 设置窗口geometry并居中
+    window.geometry(f"{req_width}x{req_height}+{x}+{y}")
     window.update_idletasks()
+
+def center_window(window):
+    """将窗口居中显示在当前显示器上（保留旧函数以兼容）"""
+    adjust_window_size(window)
 
 def select_intersection_type():
     """选择交叉口类型或读取文件"""
@@ -519,6 +540,10 @@ def load_data_from_file(file_name, table_instance, root_instance):
             # 重新绑定按钮
             if 'plot_button' in globals():
                 plot_button.config(command=lambda: plot_traffic_flow(table))
+            # 调整窗口大小以适应新表格
+            root_instance.update_idletasks()
+            root_instance.update()
+            adjust_window_size(root_instance)
         
         # 设置数据
         table_instance.set_data(data)
@@ -526,6 +551,10 @@ def load_data_from_file(file_name, table_instance, root_instance):
         table_instance.is_modified = False
         if hasattr(update_window_title, 'root'):
             update_window_title()
+        # 调整窗口大小以适应内容
+        root_instance.update_idletasks()
+        root_instance.update()
+        adjust_window_size(root_instance)
         return True, table_instance
         
     except Exception as e:
@@ -541,6 +570,8 @@ def on_load_data_click():
         success, new_table = load_data_from_file(file_name, table, root)
         if success:
             table = new_table
+            # 调整窗口大小以适应新内容
+            adjust_window_size(root)
             messagebox.showinfo("成功", f"数据加载成功！已识别为{table.num_entries}路交叉口。")
 
 def on_save_data_click():
@@ -598,6 +629,134 @@ def on_save_data_as_click():
             messagebox.showinfo("成功", f"数据已保存到 {file_name}")
         except Exception as e:
             messagebox.showerror("错误", f"保存文件时出错：{str(e)}")
+
+def on_clear_data_click():
+    """清空数据"""
+    global table
+    # 确认操作
+    if messagebox.askyesno("确认", "确定要清空所有数据吗？"):
+        # 清空所有输入框
+        for row in table._widgets:
+            for widget in row:
+                widget.delete(0, tk.END)
+        # 清除文件名和修改标记
+        table.file_name = None
+        table.is_modified = False
+        update_window_title()
+        messagebox.showinfo("成功", "数据已清空")
+
+def on_new_file_click():
+    """新建文件"""
+    global table, root
+    # 确认操作
+    if table.is_modified:
+        if not messagebox.askyesno("确认", "当前数据已修改，确定要新建文件吗？未保存的修改将丢失。"):
+            return
+    
+    # 创建简单的对话框选择交叉口类型
+    dialog = tk.Toplevel(root)
+    dialog.title("选择交叉口类型")
+    dialog.resizable(False, False)
+    dialog.transient(root)  # 设置为父窗口的临时窗口
+    dialog.grab_set()  # 模态对话框
+    
+    result = {'choice': None}
+    
+    def on_choice(choice):
+        result['choice'] = choice
+        dialog.destroy()
+    
+    def on_close():
+        result['choice'] = None
+        dialog.destroy()
+    
+    dialog.protocol("WM_DELETE_WINDOW", on_close)
+    
+    # 创建主框架
+    main_frame = tk.Frame(dialog, padx=30, pady=30)
+    main_frame.pack()
+    
+    # 标题
+    title_label = tk.Label(main_frame, text="请选择交叉口类型：", 
+                          font=('Arial', 14), pady=15)
+    title_label.pack()
+    
+    # 按钮框架
+    button_frame = tk.Frame(main_frame)
+    button_frame.pack()
+    
+    # 创建按钮
+    btn1 = tk.Button(button_frame, text="3路交叉口", width=18, height=2, 
+                     command=lambda: on_choice(3), font=('Arial', 11))
+    btn1.pack(pady=8)
+    
+    btn2 = tk.Button(button_frame, text="4路交叉口", width=18, height=2, 
+                     command=lambda: on_choice(4), font=('Arial', 11))
+    btn2.pack(pady=8)
+    
+    btn3 = tk.Button(button_frame, text="5路交叉口", width=18, height=2, 
+                     command=lambda: on_choice(5), font=('Arial', 11))
+    btn3.pack(pady=8)
+    
+    btn4 = tk.Button(button_frame, text="6路交叉口", width=18, height=2, 
+                     command=lambda: on_choice(6), font=('Arial', 11))
+    btn4.pack(pady=8)
+    
+    # 居中显示对话框
+    dialog.update_idletasks()
+    dialog_width = dialog.winfo_reqwidth()
+    dialog_height = dialog.winfo_reqheight()
+    screen_width = dialog.winfo_screenwidth()
+    screen_height = dialog.winfo_screenheight()
+    x = (screen_width - dialog_width) // 2
+    y = (screen_height - dialog_height) // 2
+    dialog.geometry(f"{dialog_width}x{dialog_height}+{x}+{y}")
+    
+    # 等待用户选择
+    dialog.wait_window()
+    
+    choice = result['choice']
+    if choice is None:
+        return
+    
+    num_entries = choice
+    
+    # 如果路数不同，需要重新创建表格
+    if table.num_entries != num_entries:
+        # 销毁旧表格
+        table.destroy()
+        # 查找按钮框架
+        button_frame = None
+        for widget in root.winfo_children():
+            if isinstance(widget, tk.Frame):
+                children = widget.winfo_children()
+                if children:
+                    all_buttons = all(isinstance(child, (ttk.Button, tk.Button)) for child in children)
+                    if all_buttons and len(children) > 0:
+                        button_frame = widget
+                        break
+        # 创建新表格
+        table = Table(root, num_entries=num_entries)
+        if button_frame:
+            table.pack(before=button_frame)
+        else:
+            table.pack()
+        # 重新绑定按钮
+        if 'plot_button' in globals():
+            plot_button.config(command=lambda: plot_traffic_flow(table))
+        # 调整窗口大小
+        root.update_idletasks()
+        root.update()
+        adjust_window_size(root)
+    
+    # 清空数据
+    for row in table._widgets:
+        for widget in row:
+            widget.delete(0, tk.END)
+    table.file_name = None
+    table.is_modified = False
+    update_window_title()
+    messagebox.showinfo("成功", f"已创建新的{num_entries}路交叉口数据表格")
 
 
 def show_about():
@@ -1614,8 +1773,14 @@ if choice == 'load_file' and initial_file:
 button_frame = tk.Frame(root)
 button_frame.pack(pady=5)
 
+new_file_button = ttk.Button(button_frame, text="新建文件", command=on_new_file_click)
+new_file_button.pack(side=tk.LEFT, padx=5)
+
 load_button = ttk.Button(button_frame, text="读取数据", command=on_load_data_click)
 load_button.pack(side=tk.LEFT, padx=5)
+
+clear_data_button = ttk.Button(button_frame, text="清空数据", command=on_clear_data_click)
+clear_data_button.pack(side=tk.LEFT, padx=5)
 
 save_button = ttk.Button(button_frame, text="保存数据", command=on_save_data_click)
 save_button.pack(side=tk.LEFT, padx=5)
@@ -1634,8 +1799,11 @@ about_button.pack(side=tk.LEFT, padx=5)
 
 # 显示主窗口并居中（在所有组件添加完成后）
 root.deiconify()
-root.update()  # 确保所有组件都布局完成
-center_window(root)  # 居中显示主窗口
+root.update_idletasks()  # 确保所有组件都布局完成
+root.update()  # 再次更新以确保尺寸计算准确
+
+# 调整窗口大小以适应内容并居中
+adjust_window_size(root)
 
 # 添加主窗口关闭事件处理，确保程序完全退出
 def on_main_window_close():

@@ -13,13 +13,21 @@ datas_list = []
 if os.path.exists(help_file):
     datas_list.append((help_file, '.'))
 
+# 添加字体文件
+fonts_dir = 'fonts'
+if os.path.exists(fonts_dir):
+    for font_file in os.listdir(fonts_dir):
+        if font_file.endswith(('.ttf', '.otf', '.ttc')):
+            font_path = os.path.join(fonts_dir, font_file)
+            datas_list.append((font_path, 'fonts'))
+
 # 添加图标文件（用于窗口图标）
 if os.path.exists('app_icon.png'):
     datas_list.append(('app_icon.png', '.'))
 
 # 自动检测主文件
-main_files = ['Alpha1.0.py', '交叉口流量绘制1.0.py']
-main_file = 'Alpha1.0.py'  # 默认值
+main_files = ['交叉口流量绘制1.1.py', '交叉口流量绘制1.0.py', 'Alpha1.0.py']
+main_file = '交叉口流量绘制1.1.py'  # 默认值
 for file in main_files:
     if os.path.exists(file):
         main_file = file

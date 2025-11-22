@@ -73,18 +73,18 @@ pip install -r requirements.txt
 
 **Windows:**
 ```cmd
-python 交叉口流量绘制1.0.py
+python 交叉口流量绘制1.1.py
 ```
 
 **macOS/Linux:**
 ```bash
-python3 交叉口流量绘制1.0.py
+python3 交叉口流量绘制1.1.py
 ```
 
 Or if using virtual environment:
 ```bash
-venv\Scripts\python.exe 交叉口流量绘制1.0.py  # Windows
-venv/bin/python3 交叉口流量绘制1.0.py           # macOS/Linux
+venv\Scripts\python.exe 交叉口流量绘制1.1.py  # Windows
+venv/bin/python3 交叉口流量绘制1.1.py           # macOS/Linux
 ```
 
 #### Basic workflow
@@ -114,7 +114,8 @@ For more details, see the build configuration files:
 
 ```
 intersection-traffic-flow/
-├── 交叉口流量绘制1.0.py      # Main application
+├── 交叉口流量绘制1.1.py      # Main application (latest)
+├── 交叉口流量绘制1.0.py      # Previous version
 ├── build_all.py              # Build script
 ├── requirements.txt          # Python dependencies
 ├── setup_venv.py            # Virtual environment setup
@@ -247,18 +248,18 @@ pip install -r requirements.txt
 
 **Windows:**
 ```cmd
-python 交叉口流量绘制1.0.py
+python 交叉口流量绘制1.1.py
 ```
 
 **macOS/Linux:**
 ```bash
-python3 交叉口流量绘制1.0.py
+python3 交叉口流量绘制1.1.py
 ```
 
 如果使用虚拟环境：
 ```bash
-venv\Scripts\python.exe 交叉口流量绘制1.0.py  # Windows
-venv/bin/python3 交叉口流量绘制1.0.py           # macOS/Linux
+venv\Scripts\python.exe 交叉口流量绘制1.1.py  # Windows
+venv/bin/python3 交叉口流量绘制1.1.py           # macOS/Linux
 ```
 
 #### 基本工作流程
@@ -288,7 +289,8 @@ python build_all.py
 
 ```
 intersection-traffic-flow/
-├── 交叉口流量绘制1.0.py      # 主程序
+├── 交叉口流量绘制1.1.py      # 主程序（最新版本）
+├── 交叉口流量绘制1.0.py      # 旧版本
 ├── build_all.py              # 构建脚本
 ├── requirements.txt          # Python依赖
 ├── setup_venv.py            # 虚拟环境设置
@@ -360,7 +362,7 @@ intersection-traffic-flow/
 
 1. 使用批处理文件：直接运行 `激活虚拟环境.bat`
 2. 使用 CMD：运行 `venv\Scripts\activate.bat`
-3. 直接使用 Python：`venv\Scripts\python.exe 交叉口流量绘制1.0.py`
+3. 直接使用 Python：`venv\Scripts\python.exe 交叉口流量绘制1.1.py`
 
 更多详情请参考 `README_虚拟环境使用说明.md`。
 
