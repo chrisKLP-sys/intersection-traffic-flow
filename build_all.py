@@ -169,8 +169,8 @@ def build_application():
     
     print(f"  检测到系统: {system} ({system_info['machine']})")
     
-    # 自动检测主文件
-    main_files = ['Alpha1.0.py', '交叉口流量绘制1.0.py']
+    # 自动检测主文件（优先使用最新版本）
+    main_files = ['交叉口流量绘制1.1.py', '交叉口流量绘制1.0.py', 'Alpha1.0.py']
     main_file = None
     for file in main_files:
         if os.path.exists(file):
@@ -208,6 +208,22 @@ def build_application():
     if os.path.exists(icon_png):
         datas.append((icon_png, '.'))
         print(f"  ✓ 添加窗口图标: {icon_png}")
+    
+    # 检查并添加字体文件
+    fonts_dir = 'fonts'
+    if os.path.exists(fonts_dir):
+        font_count = 0
+        for font_file in os.listdir(fonts_dir):
+            if font_file.endswith(('.ttf', '.otf', '.ttc')):
+                font_path = os.path.join(fonts_dir, font_file)
+                datas.append((font_path, 'fonts'))
+                font_count += 1
+        if font_count > 0:
+            print(f"  ✓ 找到 {font_count} 个字体文件")
+        else:
+            print(f"  ⚠ 未找到字体文件（.ttf, .otf, .ttc）")
+    else:
+        print(f"  ⚠ 未找到字体目录: {fonts_dir}")
     
     # 构建 PyInstaller 命令
     cmd = [
@@ -384,8 +400,8 @@ def main():
     if not check_python_version():
         sys.exit(1)
     
-    # 检查是否在项目目录，自动检测主文件
-    main_files = ['Alpha1.0.py', '交叉口流量绘制1.0.py']
+    # 检查是否在项目目录，自动检测主文件（优先使用最新版本）
+    main_files = ['交叉口流量绘制1.1.py', '交叉口流量绘制1.0.py', 'Alpha1.0.py']
     main_file = None
     for file in main_files:
         if os.path.exists(file):
