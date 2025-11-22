@@ -66,7 +66,7 @@ echo 要激活虚拟环境，请运行:
 echo   %VENV_DIR%\Scripts\activate
 echo.
 echo 或者直接使用虚拟环境中的Python:
-echo   %VENV_DIR%\Scripts\python.exe 交叉口流量绘制1.1.py
+echo   %VENV_DIR%\Scripts\python.exe 交叉口流量绘制1.2.py
 echo.
 pause
 

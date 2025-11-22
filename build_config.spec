@@ -26,8 +26,8 @@ if os.path.exists('app_icon.png'):
     datas_list.append(('app_icon.png', '.'))
 
 # 自动检测主文件
-main_files = ['交叉口流量绘制1.1.py', '交叉口流量绘制1.0.py', 'Alpha1.0.py']
-main_file = '交叉口流量绘制1.1.py'  # 默认值
+main_files = ['交叉口流量绘制1.2.py', '交叉口流量绘制1.1.py', '交叉口流量绘制1.0.py', 'Alpha1.0.py']
+main_file = '交叉口流量绘制1.2.py'  # 默认值
 for file in main_files:
     if os.path.exists(file):
         main_file = file

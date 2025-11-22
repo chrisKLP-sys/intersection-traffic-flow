@@ -170,7 +170,7 @@ def build_application():
     print(f"  检测到系统: {system} ({system_info['machine']})")
     
     # 自动检测主文件（优先使用最新版本）
-    main_files = ['交叉口流量绘制1.1.py', '交叉口流量绘制1.0.py', 'Alpha1.0.py']
+    main_files = ['交叉口流量绘制1.2.py', '交叉口流量绘制1.1.py', '交叉口流量绘制1.0.py', 'Alpha1.0.py']
     main_file = None
     for file in main_files:
         if os.path.exists(file):
@@ -401,7 +401,7 @@ def main():
         sys.exit(1)
     
     # 检查是否在项目目录，自动检测主文件（优先使用最新版本）
-    main_files = ['交叉口流量绘制1.1.py', '交叉口流量绘制1.0.py', 'Alpha1.0.py']
+    main_files = ['交叉口流量绘制1.2.py', '交叉口流量绘制1.1.py', '交叉口流量绘制1.0.py', 'Alpha1.0.py']
     main_file = None
     for file in main_files:
         if os.path.exists(file):
