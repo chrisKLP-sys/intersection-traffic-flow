@@ -4,7 +4,7 @@
 
 ---
 
-**Latest Stable Release / 最新稳定版本: [v1.2.0](https://github.com/chrisKLP-sys/intersection-traffic-flow/releases/tag/v1.2.0)** 🎉
+**Latest Stable Release / 最新稳定版本: [v1.3.0](https://github.com/chrisKLP-sys/intersection-traffic-flow/releases/tag/v1.3.0)** 🎉
 
 <a name="english"></a>
 ## English
@@ -75,18 +75,18 @@ pip install -r requirements.txt
 
 **Windows:**
 ```cmd
-python 交叉口交通流量流向可视化工具1.2.py
+python 交叉口交通流量流向可视化工具1.3.py
 ```
 
 **macOS/Linux:**
 ```bash
-python3 交叉口交通流量流向可视化工具1.2.py
+python3 交叉口交通流量流向可视化工具1.3.py
 ```
 
 Or if using virtual environment:
 ```bash
-venv\Scripts\python.exe 交叉口交通流量流向可视化工具1.2.py  # Windows
-venv/bin/python3 交叉口交通流量流向可视化工具1.2.py           # macOS/Linux
+venv\Scripts\python.exe 交叉口交通流量流向可视化工具1.3.py  # Windows
+venv/bin/python3 交叉口交通流量流向可视化工具1.3.py           # macOS/Linux
 ```
 
 #### Basic workflow
@@ -116,7 +116,7 @@ For more details, see the build configuration files:
 
 ```
 intersection-traffic-flow/
-├── 交叉口交通流量流向可视化工具1.2.py      # Main application (latest)
+├── 交叉口交通流量流向可视化工具1.3.py      # Main application (latest)
 ├── 交叉口流量绘制1.1.py      # Previous version
 ├── 交叉口流量绘制1.0.py      # Older version
 ├── build_all.py              # Build script

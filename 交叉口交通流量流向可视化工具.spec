@@ -2,7 +2,11 @@
 
 
 a = Analysis(
+<<<<<<< Updated upstream
     ['交叉口交通流量流向可视化工具1.2.py'],
+=======
+    ['交叉口交通流量流向可视化工具1.3.py'],
+>>>>>>> Stashed changes
     pathex=[],
     binaries=[],
     datas=[('帮助文档.html', '.'), ('fonts\\SourceHanSansCN-Regular.otf', 'fonts')],

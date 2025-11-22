@@ -4,8 +4,13 @@
 # http://msdn.microsoft.com/en-us/library/ms646997.aspx
 VSVersionInfo(
   ffi=FixedFileInfo(
+<<<<<<< Updated upstream
     filevers=(1, 2, 0, 0),
     prodvers=(1, 2, 0, 0),
+=======
+    filevers=(1, 3, 0, 0),
+    prodvers=(1, 3, 0, 0),
+>>>>>>> Stashed changes
     mask=0x3f,
     flags=0x0,
     OS=0x40004,
@@ -20,12 +25,20 @@ VSVersionInfo(
         u'040904B0',
         [StringStruct(u'CompanyName', u'chrisKLP-sys'),
         StringStruct(u'FileDescription', u'交叉口交通流量流向可视化工具'),
+<<<<<<< Updated upstream
         StringStruct(u'FileVersion', u'1.2.0.0'),
+=======
+        StringStruct(u'FileVersion', u'1.3.0.0'),
+>>>>>>> Stashed changes
         StringStruct(u'InternalName', u'交叉口交通流量流向可视化工具'),
         StringStruct(u'LegalCopyright', u'Copyright (c) 2025 交叉口交通流量流向可视化工具'),
         StringStruct(u'OriginalFilename', u'交叉口交通流量流向可视化工具.exe'),
         StringStruct(u'ProductName', u'交叉口交通流量流向可视化工具'),
+<<<<<<< Updated upstream
         StringStruct(u'ProductVersion', u'1.2.0.0'),
+=======
+        StringStruct(u'ProductVersion', u'1.3.0.0'),
+>>>>>>> Stashed changes
         StringStruct(u'Comments', u'https://github.com/chrisKLP-sys/intersection-traffic-flow')]
       )
     ]),

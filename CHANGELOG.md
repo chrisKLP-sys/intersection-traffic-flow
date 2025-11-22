@@ -12,12 +12,46 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [1.2.0] - 2025-11-22
+<<<<<<< Updated upstream
+=======
+## [1.3.0] - 2025-11-22
 
 **🎉 Stable Release / 稳定版本发布**
 
-This is a stable release with comprehensive bug fixes and improvements. Recommended for production use.
-这是一个稳定版本，包含全面的错误修复和改进。推荐用于生产环境。
+This is a stable release with new features and improvements. Recommended for production use.
+这是一个稳定版本，包含新功能和改进。推荐用于生产环境。
+
+### Added / 新增
+
+- Exit width bar arrows: Added solid arrows at the end of exit width bars
+  - 出口宽度条箭头：在出口宽度条末端添加实心箭头
+- Extended entry width bars: Entry width bars now extend 45 units outward
+  - 延长进口宽度条：进口宽度条现在向外延长45单位
+- Expanded plot window: Plot window range expanded from (-330, 330) to (-375, 375)
+  - 扩大绘图窗口：绘图窗口范围从(-330, 330)扩大到(-375, 375)
+- Adjusted entry name labels: Entry name labels moved 45 units outward along azimuth angle direction
+  - 调整进口名称标签：进口名称标签沿方位角方向向外移动45单位
+
+### Fixed / 修复
+
+- Startup dialog close handling: Fixed error when closing startup dialog, now properly terminates all processes
+  - 启动界面关闭处理：修复了关闭启动界面时的错误，现在能正确终止所有进程
+
+### Changed / 变更
+
+- Arrow specifications:
+  - Length: 45 units
+  - Width: 1.8 times the exit width bar width
+  - Color: Same as exit width bar color
+  - 箭头规格：
+    - 长度：45单位
+    - 宽度：出口宽度条宽度的1.8倍
+    - 颜色：与出口宽度条颜色一致
+
+---
+
+>>>>>>> Stashed changes
+## [1.2.0] - 2025-11-22
 
 ### Fixed / 修复
 
@@ -205,6 +239,8 @@ This is a stable release with comprehensive bug fixes and improvements. Recommen
 
 ## Version History / 版本历史
 
+- **v1.3.0** - New features: exit arrows, extended entry bars, expanded plot window
+  - **v1.3.0** - 新功能：出口箭头、延长进口条、扩大绘图窗口
 - **v1.2.0** - Bug fixes: division by zero, infinite slope/radius handling, improved geometric calculations
   - **v1.2.0** - 错误修复：除零错误、无限斜率/半径处理、改进的几何计算
 - **v1.1.0** - UI improvements, font optimization, window auto-sizing

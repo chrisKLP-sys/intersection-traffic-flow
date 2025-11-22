@@ -66,7 +66,11 @@ echo 要激活虚拟环境，请运行:
 echo   %VENV_DIR%\Scripts\activate
 echo.
 echo 或者直接使用虚拟环境中的Python:
+<<<<<<< Updated upstream
 echo   %VENV_DIR%\Scripts\python.exe 交叉口交通流量流向可视化工具1.2.py
+=======
+echo   %VENV_DIR%\Scripts\python.exe 交叉口交通流量流向可视化工具1.3.py
+>>>>>>> Stashed changes
 echo.
 pause
 

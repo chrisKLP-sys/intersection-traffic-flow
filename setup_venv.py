@@ -87,7 +87,11 @@ def main():
             else:
                 print(f"  source {venv_dir}/bin/activate")
             print("\n或者直接使用虚拟环境中的Python:")
+<<<<<<< Updated upstream
             print(f'  "{python_path}" 交叉口交通流量流向可视化工具1.2.py')
+=======
+            print(f'  "{python_path}" 交叉口交通流量流向可视化工具1.3.py')
+>>>>>>> Stashed changes
             return True
         else:
             print("\n依赖安装失败！")

@@ -39,13 +39,21 @@ Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
 这是最简单的方法，不需要激活虚拟环境：
 
 ```powershell
+<<<<<<< Updated upstream
 venv\Scripts\python.exe 交叉口交通流量流向可视化工具1.2.py
+=======
+venv\Scripts\python.exe 交叉口交通流量流向可视化工具1.3.py
+>>>>>>> Stashed changes
 ```
 
 或者：
 
 ```cmd
+<<<<<<< Updated upstream
 venv\Scripts\python.exe 交叉口交通流量流向可视化工具1.2.py
+=======
+venv\Scripts\python.exe 交叉口交通流量流向可视化工具1.3.py
+>>>>>>> Stashed changes
 ```
 
 ### 方案四：临时绕过执行策略（仅当前会话）
@@ -60,7 +68,11 @@ venv\Scripts\Activate.ps1
 ## 推荐工作流程
 
 1. **开发时**：使用 `激活虚拟环境.bat` 或直接使用 `venv\Scripts\python.exe`
+<<<<<<< Updated upstream
 2. **运行程序**：直接使用 `venv\Scripts\python.exe 交叉口交通流量流向可视化工具1.2.py`
+=======
+2. **运行程序**：直接使用 `venv\Scripts\python.exe 交叉口交通流量流向可视化工具1.3.py`
+>>>>>>> Stashed changes
 
 ## 验证虚拟环境
 
