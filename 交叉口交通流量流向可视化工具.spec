@@ -2,10 +2,10 @@
 
 
 a = Analysis(
-    ['交叉口交通流量流向可视化工具1.3.py'],
+    ['交叉口交通流量流向可视化工具2.1.py'],
     pathex=[],
     binaries=[],
-    datas=[('帮助文档.html', '.'), ('fonts\\SourceHanSansCN-Regular.otf', 'fonts')],
+    datas=[('帮助文档_中文.html', '.'), ('帮助文档_English.html', '.'), ('fonts\\SourceHanSansCN-Regular.otf', 'fonts')],
     hiddenimports=['matplotlib.backends.backend_tkagg', 'matplotlib.backends.backend_svg', 'matplotlib.backends.backend_pdf', 'matplotlib.backends._backend_pdf_ps', 'matplotlib.backends.backend_agg', 'matplotlib.figure', 'matplotlib.font_manager', 'matplotlib.colors', 'tkinter', 'tkinter.ttk', 'tkinter.filedialog', 'tkinter.messagebox', 'webbrowser', 'urllib.parse', 'urllib.request', 'subprocess', 'PIL', 'PIL.Image', 'PIL.PdfImagePlugin', 'PIL.PdfParser'],
     hookspath=[],
     hooksconfig={},

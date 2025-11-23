@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Intersection Traffic Flow Visualization Tool - Help</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: Arial, "Helvetica Neue", Helvetica, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+        
+        .content {
+            padding: 40px;
+        }
+        
+        .section {
+            margin-bottom: 40px;
+        }
+        
+        .section h2 {
+            color: #667eea;
+            font-size: 1.8em;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #667eea;
+        }
+        
+        .section h3 {
+            color: #764ba2;
+            font-size: 1.4em;
+            margin-top: 25px;
+            margin-bottom: 15px;
+        }
+        
+        .section p {
+            margin-bottom: 15px;
+            text-align: justify;
+        }
+        
+        .section ul, .section ol {
+            margin-left: 30px;
+            margin-bottom: 15px;
+        }
+        
+        .section li {
+            margin-bottom: 10px;
+        }
+        
+        .highlight {
+            background: #fff3cd;
+            padding: 15px;
+            border-left: 4px solid #ffc107;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        
+        .warning {
+            background: #f8d7da;
+            padding: 15px;
+            border-left: 4px solid #dc3545;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        
+        .info {
+            background: #d1ecf1;
+            padding: 15px;
+            border-left: 4px solid #17a2b8;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        
+        .step-box {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 15px 0;
+        }
+        
+        .step-box h4 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+        
+        code {
+            background: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: "Consolas", "Monaco", monospace;
+            font-size: 0.9em;
+        }
+        
+        .table-example {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        
+        .table-example th,
+        .table-example td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+        
+        .table-example th {
+            background: #667eea;
+            color: white;
+        }
+        
+        .table-example tr:nth-child(even) {
+            background: #f9f9f9;
+        }
+        
+        .footer {
+            background: #f8f9fa;
+            padding: 20px;
+            text-align: center;
+            color: #666;
+            border-top: 1px solid #ddd;
+        }
+        
+        .toc {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+        }
+        
+        .toc h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+        }
+        
+        .toc ul {
+            list-style: none;
+            margin-left: 0;
+        }
+        
+        .toc a {
+            color: #667eea;
+            text-decoration: none;
+            display: block;
+            padding: 5px 0;
+        }
+        
+        .toc a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚦 Intersection Traffic Flow Visualization Tool</h1>
+            <p>User Guide v2.1</p>
+        </div>
+        
+        <div class="content">
+            <div class="toc">
+                <h3>📑 Table of Contents</h3>
+                <ul>
+                    <li><a href="#intro">1. Introduction</a></li>
+                    <li><a href="#start">2. Quick Start</a></li>
+                    <li><a href="#data">3. Data Input</a></li>
+                    <li><a href="#draw">4. Drawing Flow Diagram</a></li>
+                    <li><a href="#file">5. File Operations</a></li>
+                    <li><a href="#types">6. Intersection Types</a></li>
+                    <li><a href="#language">7. Multi-language Support</a></li>
+                    <li><a href="#faq">8. FAQ</a></li>
+                    <li><a href="#update">9. Version History</a></li>
+                </ul>
+            </div>
+            
+            <div class="section" id="intro">
+                <h2>1. Introduction</h2>
+                <p>
+                    <strong>Intersection Traffic Flow Visualization Tool</strong> is a professional traffic flow visualization tool for drawing intersection traffic flow diagrams.
+                    The software supports 3-way, 4-way, 5-way, and 6-way intersections, and can intuitively display traffic flow and direction relationships in all directions.
+                </p>
+                <div class="info">
+                    <strong>Main Features:</strong>
+                    <ul>
+                        <li>Support for 3-6 way intersection flow drawing</li>
+                        <li>Support for left-hand and right-hand traffic rules</li>
+                        <li>Automatic calculation of entry and exit flow</li>
+                        <li>Visual display of traffic volumes for each direction</li>
+                        <li>Support for saving and loading data files</li>
+                        <li>Support for Simplified Chinese and English interfaces</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="section" id="start">
+                <h2>2. Quick Start</h2>
+                
+                <h3>2.1 Starting the Software</h3>
+                <p>After starting the software, an intersection type selection dialog will appear:</p>
+                <div class="step-box">
+                    <h4>Select Intersection Type</h4>
+                    <ul>
+                        <li><strong>3-Way Intersection</strong> - For T-type or Y-type intersections</li>
+                        <li><strong>4-Way Intersection</strong> - For cross intersections</li>
+                        <li><strong>5-Way Intersection</strong> - For five-way intersections</li>
+                        <li><strong>6-Way Intersection</strong> - For six-way intersections</li>
+                        <li><strong>Load Data File</strong> - Load data from an existing file</li>
+                    </ul>
+                </div>
+                
+                <h3>2.2 Main Interface</h3>
+                <p>After selecting the intersection type, you enter the main interface:</p>
+                <ul>
+                    <li><strong>Data Table</strong> - Displays data input boxes for each entry, window size automatically adjusts based on intersection type</li>
+                    <li><strong>Language Menu</strong> - Select interface language (Simplified Chinese/English) from the menu bar</li>
+                    <li><strong>New File</strong> - Create a new intersection data table (choose 3-6 ways)</li>
+                    <li><strong>Load Data</strong> - Load data from file</li>
+                    <li><strong>Clear Data</strong> - Clear all input box data</li>
+                    <li><strong>Save Data</strong> - Save current data to file</li>
+                    <li><strong>Save As</strong> - Save data as a new file</li>
+                    <li><strong>Draw Flow Diagram</strong> - Generate and display flow diagram</li>
+                    <li><strong>Help</strong> - Open this help document</li>
+                    <li><strong>About</strong> - View software information</li>
+                </ul>
+            </div>
+            
+            <div class="section" id="data">
+                <h2>3. Data Input</h2>
+                
+                <h3>3.1 Data Table Description</h3>
+                <p>The data table contains the following columns:</p>
+                <table class="table-example">
+                    <tr>
+                        <th>Column Name</th>
+                        <th>Description</th>
+                        <th>Example</th>
+                    </tr>
+                    <tr>
+                        <td>Entry No.</td>
+                        <td>Auto-generated, not editable</td>
+                        <td>Entry 1, Entry 2, ...</td>
+                    </tr>
+                    <tr>
+                        <td>Entry Name</td>
+                        <td>Road name or direction name</td>
+                        <td>Main Street, Oak Avenue, East, South, West, North</td>
+                    </tr>
+                    <tr>
+                        <td>Angle</td>
+                        <td>Entry direction angle (0-360 degrees)</td>
+                        <td>0, 90, 180, 270</td>
+                    </tr>
+                    <tr>
+                        <td>Flow Data</td>
+                        <td>Traffic volume for each direction (vehicles/hour)</td>
+                        <td>100, 200, 150</td>
+                    </tr>
+                </table>
+                
+                <div class="highlight">
+                    <strong>💡 Tip:</strong> Angle is measured from due east (0°), increasing counterclockwise. For example:
+                    <ul>
+                        <li>0° = East</li>
+                        <li>90° = North</li>
+                        <li>180° = West</li>
+                        <li>270° = South</li>
+                    </ul>
+                </div>
+                
+                <h3>3.2 Traffic Rule Selection</h3>
+                <p>Above the data table, you can select the traffic rule:</p>
+                <ul>
+                    <li><strong>Right-Hand Traffic</strong> - For most countries (e.g., China, USA, etc.)</li>
+                    <li><strong>Left-Hand Traffic</strong> - For countries like UK, Japan, Australia, etc.</li>
+                </ul>
+                <div class="info">
+                    <strong>💡 Tip:</strong> Selecting different traffic rules affects the column header order for 4-way intersections and the drawing method of flow diagrams.
+                </div>
+                
+                <h3>3.3 4-Way Intersection Data Description</h3>
+                <p>For 4-way intersections, the meaning of flow columns differs according to traffic rules:</p>
+                <table class="table-example">
+                    <tr>
+                        <th>Traffic Rule</th>
+                        <th>Column Order</th>
+                        <th>Description</th>
+                    </tr>
+                    <tr>
+                        <td rowspan="4">Right-Hand Traffic</td>
+                        <td>U-Turn</td>
+                        <td>Traffic volume turning around from this entry</td>
+                    </tr>
+                    <tr>
+                        <td>Left Turn</td>
+                        <td>Traffic volume turning left from this entry</td>
+                    </tr>
+                    <tr>
+                        <td>Straight</td>
+                        <td>Traffic volume going straight from this entry</td>
+                    </tr>
+                    <tr>
+                        <td>Right Turn</td>
+                        <td>Traffic volume turning right from this entry</td>
+                    </tr>
+                    <tr>
+                        <td rowspan="4">Left-Hand Traffic</td>
+                        <td>U-Turn</td>
+                        <td>Traffic volume turning around from this entry</td>
+                    </tr>
+                    <tr>
+                        <td>Right Turn</td>
+                        <td>Traffic volume turning right from this entry</td>
+                    </tr>
+                    <tr>
+                        <td>Straight</td>
+                        <td>Traffic volume going straight from this entry</td>
+                    </tr>
+                    <tr>
+                        <td>Left Turn</td>
+                        <td>Traffic volume turning left from this entry</td>
+                    </tr>
+                </table>
+                
+                <h3>3.4 Other Intersection Types</h3>
+                <p>For 3-way, 5-way, and 6-way intersections, flow columns use a generic format:</p>
+                <ul>
+                    <li><strong>Flow X_X</strong> - U-turn (from entry X back to exit X)</li>
+                    <li><strong>Flow X_X-1</strong> - Flow from entry X to exit X-1</li>
+                    <li><strong>Flow X_X-2</strong> - Flow from entry X to exit X-2</li>
+                    <li>And so on...</li>
+                </ul>
+            </div>
+            
+            <div class="section" id="draw">
+                <h2>4. Drawing Flow Diagram</h2>
+                
+                <h3>4.1 Drawing Steps</h3>
+                <div class="step-box">
+                    <h4>Step 1: Input Data</h4>
+                    <p>Enter the name, angle, and flow data for each entry in the data table.</p>
+                </div>
+                
+                <div class="step-box">
+                    <h4>Step 2: Select Traffic Rule</h4>
+                    <p>Select right-hand or left-hand traffic rule according to actual conditions.</p>
+                </div>
+                
+                <div class="step-box">
+                    <h4>Step 3: Click "Draw Flow Diagram"</h4>
+                    <p>Click the "Draw Flow Diagram" button on the main interface, and the software will automatically generate the flow diagram.</p>
+                </div>
+                
+                <div class="step-box">
+                    <h4>Step 4: View Results</h4>
+                    <p>The flow diagram will be displayed in a new window, including:</p>
+                    <ul>
+                        <li>Flow lines for each entry and exit (width represents flow volume)</li>
+                        <li>Paths for each direction (colors correspond to entry colors)</li>
+                        <li>Flow value labels</li>
+                        <li>Road name labels</li>
+                    </ul>
+                </div>
+                
+                <h3>4.2 Flow Diagram Description</h3>
+                <ul>
+                    <li><strong>Color</strong> - Each entry uses a different color identifier</li>
+                    <li><strong>Line Width</strong> - Line width is proportional to flow volume</li>
+                    <li><strong>Labels</strong> - Display specific flow values (zero flow is not displayed)</li>
+                    <li><strong>Paths</strong> - Display actual vehicle travel paths</li>
+                </ul>
+            </div>
+            
+            <div class="section" id="file">
+                <h2>5. File Operations</h2>
+                
+                <h3>5.1 Saving Data</h3>
+                <p>Click the "Save Data" button to save current data to a file. The file format is a text file (.txt) using UTF-8 encoding.</p>
+                
+                <h3>5.2 Loading Data</h3>
+                <p>Click the "Load Data" button to load data from a file. The software supports the following formats:</p>
+                <ul>
+                    <li>New format: First line contains "This intersection is a X-way intersection, implementing left/right-hand traffic rule." declaration</li>
+                    <li>If the number of roads is not declared, the software will automatically infer from data length</li>
+                    <li>If the traffic rule is not declared, it defaults to right-hand traffic</li>
+                </ul>
+                
+                <h3>5.3 File Format</h3>
+                <p>Data file format example (4-way intersection, right-hand traffic):</p>
+                <div class="step-box">
+                    <code>
+This intersection is a 4-way intersection, implementing right-hand traffic rule.<br>
+Main Street,Oak Avenue,Main Street,Oak Avenue<br>
+0,90,180,270<br>
+10,20,15,25<br>
+50,60,55,65<br>
+100,110,105,115<br>
+30,40,35,45<br>
+                    </code>
+                </div>
+                <p>File description:</p>
+                <ol>
+                    <li>First line: Intersection type and traffic rule declaration</li>
+                    <li>Second line: Entry names (comma-separated)</li>
+                    <li>Third line: Entry angles (comma-separated)</li>
+                    <li>Subsequent lines: Flow data for each direction (each line corresponds to one direction)</li>
+                </ol>
+            </div>
+            
+            <div class="section" id="types">
+                <h2>6. Intersection Types</h2>
+                
+                <h3>6.1 3-Way Intersection</h3>
+                <p>Suitable for T-type or Y-type intersections, with 3 entries and 3 exits.</p>
+                
+                <h3>6.2 4-Way Intersection</h3>
+                <p>The most common cross intersection, with 4 entries and 4 exits. Directions include: U-turn, left turn, straight, right turn (right-hand traffic) or U-turn, right turn, straight, left turn (left-hand traffic).</p>
+                
+                <h3>6.3 5-Way Intersection</h3>
+                <p>Five-way intersection, with 5 entries and 5 exits. Suitable for complex road intersections.</p>
+                
+                <h3>6.4 6-Way Intersection</h3>
+                <p>Six-way intersection, with 6 entries and 6 exits. Suitable for very complex road intersections.</p>
+            </div>
+            
+            <div class="section" id="language">
+                <h2>7. Multi-language Support</h2>
+                
+                <h3>7.1 Switching Language</h3>
+                <p>The software supports Simplified Chinese and English interface languages. Switching method:</p>
+                <div class="step-box">
+                    <h4>Method 1: Using Menu Bar</h4>
+                    <p>Click "Language / 语言" in the menu bar, then select "简体中文" or "English".</p>
+                </div>
+                
+                <h3>7.2 Language Switching Notes</h3>
+                <ul>
+                    <li>After switching language, all interface text will update immediately</li>
+                    <li>Including buttons, labels, message boxes, and all other text</li>
+                    <li>Help document will automatically select the corresponding version based on current language</li>
+                    <li>Data file format is not affected by language</li>
+                </ul>
+            </div>
+            
+            <div class="section" id="faq">
+                <h2>8. FAQ</h2>
+                
+                <h3>Q1: How to modify entered data?</h3>
+                <p><strong>A:</strong> Simply modify the corresponding cell in the data table. After modification, the window title will show "Unsaved" prompt.</p>
+                
+                <h3>Q2: What to do if the flow diagram displays abnormally or reports errors?</h3>
+                <p><strong>A:</strong> Please check:</p>
+                <ul>
+                    <li>Whether data is complete (all required fields are filled)</li>
+                    <li>Whether numeric format is correct (should be numbers)</li>
+                    <li>Whether angles are within reasonable range (0-360 degrees)</li>
+                    <li>If drawing reports errors, try adjusting the angle by ±1 degree</li>
+                </ul>
+                
+                <h3>Q3: Can I export the flow diagram?</h3>
+                <p><strong>A:</strong> The current version supports exporting flow diagrams in svg, pdf, png, jpg, tif formats. SVG vector format is recommended.</p>
+                
+                <h3>Q4: What data formats are supported?</h3>
+                <p><strong>A:</strong> The software supports text file (.txt) format using comma-separated values. Supports UTF-8, GBK, GB2312, and other encodings.</p>
+                
+                <h3>Q5: How to calculate angles?</h3>
+                <p><strong>A:</strong> Angle is measured from due east (0°), increasing counterclockwise:</p>
+                <ul>
+                    <li>0° = East</li>
+                    <li>90° = North</li>
+                    <li>180° = West</li>
+                    <li>270° = South</li>
+                </ul>
+                
+                <h3>Q6: Can I input 0 for flow?</h3>
+                <p><strong>A:</strong> Yes, the software supports inputting 0, and empty data will also be treated as 0. Zero means no flow, will not be drawn on the diagram, and will not be labeled.</p>
+                
+                <h3>Q7: What's the difference between left-hand and right-hand traffic rules?</h3>
+                <p><strong>A:</strong> The main difference is in the column header order for 4-way intersections and the drawing method of flow diagrams. Under left-hand traffic, the header order is "U-turn, Right Turn, Straight, Left Turn"; under right-hand traffic, it's "U-turn, Left Turn, Straight, Right Turn".</p>
+                
+                <h3>Q8: How to switch interface language?</h3>
+                <p><strong>A:</strong> Click "Language / 语言" in the menu bar, then select "简体中文" or "English".</p>
+            </div>
+            
+            <div class="section" id="update">
+                <h2>9. Version History</h2>
+                
+                <div class="warning">
+                    <strong>⚠️ Version Note:</strong>
+                    <ul>
+                        <li><strong>v2.0</strong> - Stable release, recommended for production use</li>
+                        <li><strong>v2.1</strong> - Development version with new features, use at your own risk</li>
+                    </ul>
+                </div>
+                
+                <h3>v2.1 Update (Development Version)</h3>
+                <div class="info">
+                    <ul>
+                        <li><strong>New Features</strong>:
+                            <ul>
+                                <li>Multi-language support: Supports Simplified Chinese and English interfaces</li>
+                                <li>Language selection menu: Can switch interface language from menu bar (startup dialog, main window, dialogs)</li>
+                                <li>Global language switching: Language changes apply to all windows</li>
+                                <li>Separated help documents: Chinese and English help documents provided separately</li>
+                                <li>Adaptive interface: Button widths and window sizes adjust automatically based on language</li>
+                                <li>Configuration persistence: Automatically saves language and traffic rule settings, restores on next startup</li>
+                                <li>Config file: Uses config.txt format, supports manual editing, includes bilingual instructions</li>
+                            </ul>
+                        </li>
+                        <li><strong>Improvements</strong>:
+                            <ul>
+                                <li>All interface text uses translation functions, supports dynamic switching</li>
+                                <li>Export file dialog file types and default filenames are translated</li>
+                                <li>Automatic window size adjustment after language change to prevent text display issues</li>
+                                <li>Startup dialog adds Help and About buttons for quick access</li>
+                            </ul>
+                        </li>
+                    </ul>
+                </div>
+                
+                <h3>v2.0 Update (Stable Release)</h3>
+                <div class="info">
+                    <ul>
+                        <li><strong>New Features</strong>:
+                            <ul>
+                                <li>Left-hand traffic rule support: Supports both left-hand and right-hand traffic rules</li>
+                                <li>Traffic rule selection: Can select traffic rule above data table</li>
+                                <li>Dynamic headers: 4-way intersection headers automatically adjust based on traffic rule</li>
+                                <li>File format update: Data files include traffic rule information</li>
+                                <li>Smart file parsing: Automatically infers intersection type from data if not declared</li>
+                                <li>Default traffic rule: Defaults to right-hand traffic if not specified</li>
+                            </ul>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p><strong>Intersection Traffic Flow Visualization Tool v2.1</strong></p>
+            <p>Copyright (C) 江浦马保国 | You are welcome to copy and distribute this software</p>
+            <p>For questions, please check the software "About" information or contact the developer</p>
+        </div>
+    </div>
+</body>
+</html>
+

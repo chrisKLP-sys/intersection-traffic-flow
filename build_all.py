@@ -277,28 +277,35 @@ def build_application():
     
     print(f"  检测到系统: {system} ({system_info['machine']})")
     
-    # 自动检测主文件（优先使用最新版本）
-    main_files = ['交叉口交通流量流向可视化工具1.3.py', '交叉口交通流量流向可视化工具1.2.py', '交叉口流量绘制1.1.py', '交叉口流量绘制1.0.py', 'Alpha1.0.py']
-    main_file = None
-    for file in main_files:
-        if os.path.exists(file):
-            main_file = file
-            break
+    # 只打包2.1版本
+    main_file = '交叉口交通流量流向可视化工具2.1.py'
     
-    if not main_file:
-        print("  ❌ 未找到主程序文件")
+    if not os.path.exists(main_file):
+        print(f"  ❌ 未找到主程序文件: {main_file}")
         return False
     
     print(f"  使用主文件: {main_file}")
     
-    # 检查帮助文档是否存在
-    help_file = '帮助文档.html'
+    # 检查帮助文档是否存在（2.1版本需要中英文两个帮助文档）
     datas = []
-    if os.path.exists(help_file):
-        print(f"  ✓ 找到帮助文档: {help_file}")
-        datas.append((help_file, '.'))
+    help_files = []
+    
+    help_file_zh = '帮助文档_中文.html'
+    help_file_en = '帮助文档_English.html'
+    if os.path.exists(help_file_zh):
+        help_files.append(help_file_zh)
+        print(f"  ✓ 找到帮助文档: {help_file_zh}")
     else:
-        print(f"  ⚠ 未找到帮助文档: {help_file}")
+        print(f"  ⚠ 未找到帮助文档: {help_file_zh}")
+    if os.path.exists(help_file_en):
+        help_files.append(help_file_en)
+        print(f"  ✓ 找到帮助文档: {help_file_en}")
+    else:
+        print(f"  ⚠ 未找到帮助文档: {help_file_en}")
+    
+    # 添加帮助文档到数据文件列表
+    for help_file in help_files:
+        datas.append((help_file, '.'))
     
     # 检查图标文件是否存在
     icon_file = None
@@ -339,7 +346,7 @@ def build_application():
         '--clean',
         '--noconfirm',
         '--onefile',
-        '--name', '交叉口交通流量流向可视化工具',
+        '--name', '交叉口交通流量流向可视化工具2.1',
         main_file
     ]
     
@@ -429,9 +436,9 @@ def verify_build():
     system = platform.system()
     
     if system == 'Windows':
-        exe_path = os.path.join('dist', '交叉口交通流量流向可视化工具.exe')
+        exe_path = os.path.join('dist', '交叉口交通流量流向可视化工具2.1.exe')
     else:
-        exe_path = os.path.join('dist', '交叉口交通流量流向可视化工具')
+        exe_path = os.path.join('dist', '交叉口交通流量流向可视化工具2.1')
     
     if os.path.exists(exe_path):
         file_size = os.path.getsize(exe_path)
@@ -518,20 +525,12 @@ def main():
     if not check_python_version():
         sys.exit(1)
     
-    # 检查是否在项目目录，自动检测主文件（优先使用最新版本）
-    main_files = ['交叉口交通流量流向可视化工具1.3.py', '交叉口交通流量流向可视化工具1.2.py', '交叉口流量绘制1.1.py', '交叉口流量绘制1.0.py', 'Alpha1.0.py']
-    main_file = None
-    for file in main_files:
-        if os.path.exists(file):
-            main_file = file
-            break
+    # 只打包2.1版本
+    main_file = '交叉口交通流量流向可视化工具2.1.py'
     
-    if not main_file:
-        print("❌ 错误: 未找到主程序文件")
-        print("   请确保以下文件之一存在:")
-        for file in main_files:
-            print(f"     - {file}")
-        print("   或在项目根目录下运行此脚本")
+    if not os.path.exists(main_file):
+        print(f"❌ 错误: 未找到主程序文件: {main_file}")
+        print("   请确保文件存在，或在项目根目录下运行此脚本")
         sys.exit(1)
     
     print(f"✓ 找到主程序文件: {main_file}")
