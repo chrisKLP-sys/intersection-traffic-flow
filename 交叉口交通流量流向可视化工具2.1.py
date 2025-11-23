@@ -1093,9 +1093,9 @@ def select_intersection_type():
     help_btn.pack(side=tk.LEFT, padx=5)
     dialog_components['help_btn'] = help_btn
     
-    # 关于按钮
+    # 关于按钮（传入dialog作为父窗口）
     about_btn = ttk.Button(help_about_frame, text=t('btn_about'), 
-                           command=show_about, width=12)
+                           command=lambda: show_about(dialog), width=12)
     about_btn.pack(side=tk.LEFT, padx=5)
     dialog_components['about_btn'] = about_btn
     
@@ -1647,12 +1647,147 @@ def on_new_file_click():
     messagebox.showinfo(t('file_saved_success'), t('new_table_created', num=num_entries))
 
 
-def show_about():
+def show_about(parent=None):
+    """显示关于对话框，包含可点击的GitHub链接"""
+    import webbrowser
+    
+    # 获取父窗口：优先使用传入的parent，其次使用root，最后尝试获取当前活动窗口
+    root_window = parent
+    if not root_window:
+        root_window = _ui_components.get('root')
+    if not root_window:
+        # 尝试获取当前活动的Tk窗口
+        try:
+            # 获取所有Tk窗口
+            for widget in tk._default_root.winfo_children() if tk._default_root else []:
+                if isinstance(widget, (tk.Tk, tk.Toplevel)):
+                    if widget.winfo_viewable():
+                        root_window = widget
+                        break
+        except:
+            pass
+    
+    if not root_window:
+        # 如果找不到父窗口，使用messagebox作为后备方案
+        if CURRENT_LANGUAGE == 'zh_CN':
+            about_text = "交叉口交通流量流向可视化工具\nIntersection Traffic Flow Visualize\n\n版权所有 (C) \n\n本软件由 [江浦马保国] 开发，保留所有权利。\n欢迎复制、传播本软件。\n\nGitHub 仓库：\nhttps://github.com/chrisKLP-sys/intersection-traffic-flow"
+        else:
+            about_text = "Intersection Traffic Flow Visualization Tool\n\nCopyright (C) \n\nThis software is developed by [江浦马保国], all rights reserved.\nYou are welcome to copy and distribute this software.\n\nGitHub Repository:\nhttps://github.com/chrisKLP-sys/intersection-traffic-flow"
+        messagebox.showinfo(t('about'), about_text)
+        return
+    
+    # 创建自定义对话框
+    about_dialog = tk.Toplevel(root_window)
+    about_dialog.title(t('about'))
+    about_dialog.resizable(False, False)
+    about_dialog.transient(root_window)
+    about_dialog.grab_set()
+    
+    # 设置对话框背景
+    about_dialog.configure(bg='white')
+    
+    # 创建主框架
+    main_frame = tk.Frame(about_dialog, bg='white', padx=30, pady=20)
+    main_frame.pack()
+    
+    # 标题
+    global GUI_FONT_FAMILY
+    font_family = GUI_FONT_FAMILY if GUI_FONT_FAMILY else 'Microsoft YaHei UI'
+    title_label = tk.Label(main_frame, 
+                          text="交叉口交通流量流向可视化工具\nIntersection Traffic Flow Visualize",
+                          font=(font_family, 12, 'bold'),
+                          bg='white', fg='#333333')
+    title_label.pack(pady=(0, 15))
+    
+    # 版权信息
     if CURRENT_LANGUAGE == 'zh_CN':
-        about_text = "交叉口交通流量流向可视化工具\nIntersection Traffic Flow Visualize\n\n版权所有 (C) \n\n本软件由 [江浦马保国] 开发，保留所有权利。\n欢迎复制、传播本软件。"
+        copyright_text = "版权所有 (C)\n\n本软件由 [江浦马保国] 开发，保留所有权利。\n欢迎复制、传播本软件。"
+        github_label_text = "GitHub 仓库："
+        email_label_text = "联系邮箱："
     else:
-        about_text = "Intersection Traffic Flow Visualization Tool\n\nCopyright (C) \n\nThis software is developed by [江浦马保国], all rights reserved.\nYou are welcome to copy and distribute this software."
-    messagebox.showinfo(t('about'), about_text)
+        copyright_text = "Copyright (C)\n\nThis software is developed by [江浦马保国], all rights reserved.\nYou are welcome to copy and distribute this software."
+        github_label_text = "GitHub Repository:"
+        email_label_text = "Contact Email:"
+    
+    copyright_label = tk.Label(main_frame, 
+                               text=copyright_text,
+                               font=(font_family, 10),
+                               bg='white', fg='#666666',
+                               justify='left')
+    copyright_label.pack(pady=(0, 15))
+    
+    # GitHub链接框架
+    github_frame = tk.Frame(main_frame, bg='white')
+    github_frame.pack(pady=(0, 10))
+    
+    github_label = tk.Label(github_frame, 
+                           text=github_label_text,
+                           font=(font_family, 10),
+                           bg='white', fg='#666666')
+    github_label.pack(side=tk.LEFT)
+    
+    # 可点击的GitHub链接
+    github_url = "https://github.com/chrisKLP-sys/intersection-traffic-flow"
+    github_link_label = tk.Label(github_frame,
+                         text=github_url,
+                         font=(font_family, 10, 'underline'),
+                         bg='white', fg='#0066cc',
+                         cursor='hand2')
+    github_link_label.pack(side=tk.LEFT, padx=(5, 0))
+    
+    # 绑定GitHub点击事件
+    def open_github(event=None):
+        webbrowser.open(github_url)
+    
+    github_link_label.bind('<Button-1>', open_github)
+    github_link_label.bind('<Enter>', lambda e: github_link_label.config(fg='#004499'))
+    github_link_label.bind('<Leave>', lambda e: github_link_label.config(fg='#0066cc'))
+    
+    # 邮箱链接框架
+    email_frame = tk.Frame(main_frame, bg='white')
+    email_frame.pack(pady=(0, 15))
+    
+    email_label = tk.Label(email_frame, 
+                          text=email_label_text,
+                          font=(font_family, 10),
+                          bg='white', fg='#666666')
+    email_label.pack(side=tk.LEFT)
+    
+    # 可点击的邮箱链接
+    email_address = "hqqcool@gmail.com"
+    email_link_label = tk.Label(email_frame,
+                               text=email_address,
+                               font=(font_family, 10, 'underline'),
+                               bg='white', fg='#0066cc',
+                               cursor='hand2')
+    email_link_label.pack(side=tk.LEFT, padx=(5, 0))
+    
+    # 绑定邮箱点击事件
+    def open_email(event=None):
+        webbrowser.open(f"mailto:{email_address}")
+    
+    email_link_label.bind('<Button-1>', open_email)
+    email_link_label.bind('<Enter>', lambda e: email_link_label.config(fg='#004499'))
+    email_link_label.bind('<Leave>', lambda e: email_link_label.config(fg='#0066cc'))
+    
+    # 关闭按钮
+    close_text = '关闭' if CURRENT_LANGUAGE == 'zh_CN' else 'Close'
+    close_button = ttk.Button(main_frame, 
+                             text=close_text,
+                             command=about_dialog.destroy,
+                             width=15)
+    close_button.pack(pady=(10, 0))
+    
+    # 居中显示
+    about_dialog.update_idletasks()
+    width = about_dialog.winfo_width()
+    height = about_dialog.winfo_height()
+    x = (about_dialog.winfo_screenwidth() // 2) - (width // 2)
+    y = (about_dialog.winfo_screenheight() // 2) - (height // 2)
+    about_dialog.geometry(f'{width}x{height}+{x}+{y}')
+    
+    # 设置焦点
+    about_dialog.focus_set()
 
 def show_help():
     """显示帮助文档"""
