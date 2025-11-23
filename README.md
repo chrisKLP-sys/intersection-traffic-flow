@@ -4,8 +4,7 @@
 
 ---
 
-**Latest Stable Release / 最新稳定版本: [v2.0.0](https://github.com/chrisKLP-sys/intersection-traffic-flow/releases/tag/v2.0.0)** 🎉  
-**Latest Development Version / 最新开发版本: [v2.1.0](https://github.com/chrisKLP-sys/intersection-traffic-flow/releases/tag/v2.1.0)** ⚠️
+**Latest Stable Release / 最新稳定版本: [v2.1.0](https://github.com/chrisKLP-sys/intersection-traffic-flow/releases/tag/v2.1.0)** 🎉
 
 <a name="english"></a>
 ## English
@@ -22,9 +21,9 @@ A professional Python application for visualizing traffic flow at intersections.
 - 🖼️ Export flow diagrams in multiple formats (SVG, PDF, PNG, JPG, TIF)
 - 🪟 Centered window display for better user experience
 - 📱 Cross-platform support (Windows, macOS, Linux)
-- 🚗 Left-hand and right-hand traffic rule support (v2.0+)
-- 🌐 Multi-language interface: Simplified Chinese and English (v2.1+)
-- ⚙️ Configuration persistence: Saves language and traffic rule settings (v2.1+)
+- 🚗 Left-hand and right-hand traffic rule support
+- 🌐 Multi-language interface: Simplified Chinese and English
+- ⚙️ Configuration persistence: Saves language and traffic rule settings
 
 ### Screenshots
 
@@ -120,8 +119,7 @@ For more details, see the build configuration files:
 
 ```
 intersection-traffic-flow/
-├── 交叉口交通流量流向可视化工具2.1.py      # Main application (development version)
-├── 交叉口交通流量流向可视化工具2.0.py      # Main application (stable version)
+├── 交叉口交通流量流向可视化工具2.1.py      # Main application (stable version)
 ├── build_all.py              # Build script
 ├── requirements.txt          # Python dependencies
 ├── setup_venv.py            # Virtual environment setup
@@ -188,8 +186,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 <a name="中文"></a>
 ## 中文
 
-**最新稳定版本: [v2.0.0](https://github.com/chrisKLP-sys/intersection-traffic-flow/releases/tag/v2.0.0)** 🎉  
-**最新开发版本: [v2.1.0](https://github.com/chrisKLP-sys/intersection-traffic-flow/releases/tag/v2.1.0)** ⚠️
+**最新稳定版本: [v2.1.0](https://github.com/chrisKLP-sys/intersection-traffic-flow/releases/tag/v2.1.0)** 🎉
 
 一款专业的交通流量可视化工具，用于绘制和分析交叉口的交通流量图。本工具帮助交通工程师和规划人员可视化和分析3路、4路、5路和6路交叉口的交通模式。
 
@@ -203,9 +200,9 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - 🖼️ 多种格式导出流量图（SVG、PDF、PNG、JPG、TIF）
 - 🪟 居中窗口显示，提升用户体验
 - 📱 跨平台支持（Windows、macOS、Linux）
-- 🚗 支持左行和右行通行规则（v2.0+）
-- 🌐 多语言界面：简体中文和英文（v2.1+）
-- ⚙️ 配置保存功能：自动保存语言和通行规则设置（v2.1+）
+- 🚗 支持左行和右行通行规则
+- 🌐 多语言界面：简体中文和英文
+- ⚙️ 配置保存功能：自动保存语言和通行规则设置
 
 ### 截图
 
@@ -301,8 +298,7 @@ python build_all.py
 
 ```
 intersection-traffic-flow/
-├── 交叉口交通流量流向可视化工具2.1.py      # 主程序（开发版本）
-├── 交叉口交通流量流向可视化工具2.0.py      # 主程序（稳定版本）
+├── 交叉口交通流量流向可视化工具2.1.py      # 主程序（稳定版本）
 ├── build_all.py              # 构建脚本
 ├── requirements.txt          # Python依赖
 ├── setup_venv.py            # 虚拟环境设置

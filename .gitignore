@@ -85,6 +85,7 @@ version_info.rc
 交叉口流量绘制1.1.py
 交叉口交通流量流向可视化工具1.2.py
 交叉口交通流量流向可视化工具1.3.py
+交叉口交通流量流向可视化工具2.0.py
 
 # Test data files (optional - uncomment if you don't want to share)
 # 测试数据_*.txt

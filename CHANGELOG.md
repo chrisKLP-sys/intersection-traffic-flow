@@ -14,13 +14,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [2.1.0] - 2025-11-22
 
-**⚠️ Development Version / 开发版本**
+**🎉 Stable Release / 稳定版本发布**
 
-This is a development version with new features. Use at your own risk. For production use, please use v2.0.0 (stable).
-这是一个开发版本，包含新功能。使用需自担风险。生产环境请使用 v2.0.0（稳定版）。
+This is a stable release with new features and improvements. Recommended for production use.
+这是一个稳定版本，包含新功能和改进。推荐用于生产环境。
 
 ### Added / 新增
 
+- Left-hand traffic rule support: Supports both left-hand and right-hand traffic rules
+  - 左行规则支持：支持左行规则和右行规则两种交通规则
+- Traffic rule selection: Can select traffic rule above data table
+  - 交通规则选择：可在数据表格上方选择交通规则
+- Dynamic headers: 4-way intersection headers automatically adjust based on traffic rule
+  - 动态表头：4路交叉口表头根据交通规则自动调整
+- File format update: Data files include traffic rule information
+  - 文件格式更新：数据文件包含交通规则信息
+- Enhanced file parsing: Automatically infers intersection type from data if not declared
+  - 增强的文件解析：如果未声明，自动从数据推断交叉口类型
+- Default traffic rule: Defaults to right-hand traffic if not specified
+  - 默认交通规则：如果未指定，默认为右行规则
 - Multi-language support: Simplified Chinese and English interfaces
   - 多语言支持：简体中文和英文界面
 - Language selection menu: Switch interface language from menu bar
@@ -44,6 +56,12 @@ This is a development version with new features. Use at your own risk. For produ
 
 ### Changed / 变更
 
+- Data file format: First line now includes traffic rule declaration
+  - 数据文件格式：第一行现在包含交通规则声明
+- File format: "本交叉口为X路交叉口，实行左/右行通行规则。"
+  - 文件格式："本交叉口为X路交叉口，实行左/右行通行规则。"
+- Table header order: Changes based on traffic rule for 4-way intersections
+  - 表头顺序：4路交叉口的表头顺序根据交通规则变化
 - All interface text now uses translation functions
   - 所有界面文本现在使用翻译函数
 - File export dialog: File type descriptions and default filenames are now translated
@@ -55,6 +73,14 @@ This is a development version with new features. Use at your own risk. For produ
 
 ### Technical Details / 技术细节
 
+- Modified `draw_turn_path_generic()` to support left-hand traffic
+  - 修改了 `draw_turn_path_generic()` 以支持左行规则
+- Updated `plot_traffic_flow()` with traffic rule parameter
+  - 更新了 `plot_traffic_flow()`，添加了交通规则参数
+- Enhanced `load_data_from_file()` to parse traffic rule from file
+  - 增强了 `load_data_from_file()` 以从文件解析交通规则
+- Added `on_rule_change()` callback in `Table` class
+  - 在 `Table` 类中添加了 `on_rule_change()` 回调函数
 - Added `LANGUAGES` dictionary with Chinese and English translations
   - 添加了包含中英文翻译的 `LANGUAGES` 字典
 - Implemented `t()` translation function with string formatting support
@@ -71,50 +97,6 @@ This is a development version with new features. Use at your own risk. For produ
   - 配置在语言切换和通行规则切换时自动保存
 - Configuration loads on startup and applies to language and traffic rule settings
   - 配置在启动时加载并应用到语言和通行规则设置
-
----
-
-## [2.0.0] - 2025-11-22
-
-**🎉 Stable Release / 稳定版本发布**
-
-This is a stable release with new features and improvements. Recommended for production use.
-这是一个稳定版本，包含新功能和改进。推荐用于生产环境。
-
-### Added / 新增
-
-- Left-hand traffic rule support: Supports both left-hand and right-hand traffic rules
-  - 左行规则支持：支持左行规则和右行规则两种交通规则
-- Traffic rule selection: Can select traffic rule above data table
-  - 交通规则选择：可在数据表格上方选择交通规则
-- Dynamic headers: 4-way intersection headers automatically adjust based on traffic rule
-  - 动态表头：4路交叉口表头根据交通规则自动调整
-- File format update: Data files include traffic rule information
-  - 文件格式更新：数据文件包含交通规则信息
-- Enhanced file parsing: Automatically infers intersection type from data if not declared
-  - 增强的文件解析：如果未声明，自动从数据推断交叉口类型
-- Default traffic rule: Defaults to right-hand traffic if not specified
-  - 默认交通规则：如果未指定，默认为右行规则
-
-### Changed / 变更
-
-- Data file format: First line now includes traffic rule declaration
-  - 数据文件格式：第一行现在包含交通规则声明
-- File format: "本交叉口为X路交叉口，实行左/右行通行规则。"
-  - 文件格式："本交叉口为X路交叉口，实行左/右行通行规则。"
-- Table header order: Changes based on traffic rule for 4-way intersections
-  - 表头顺序：4路交叉口的表头顺序根据交通规则变化
-
-### Technical Details / 技术细节
-
-- Modified `draw_turn_path_generic()` to support left-hand traffic
-  - 修改了 `draw_turn_path_generic()` 以支持左行规则
-- Updated `plot_traffic_flow()` with traffic rule parameter
-  - 更新了 `plot_traffic_flow()`，添加了交通规则参数
-- Enhanced `load_data_from_file()` to parse traffic rule from file
-  - 增强了 `load_data_from_file()` 以从文件解析交通规则
-- Added `on_rule_change()` callback in `Table` class
-  - 在 `Table` 类中添加了 `on_rule_change()` 回调函数
 
 ---
 
@@ -341,10 +323,8 @@ This is a stable release with new features and improvements. Recommended for pro
 
 ## Version History / 版本历史
 
-- **v2.1.0** (Development) - Multi-language support: Simplified Chinese and English interfaces
-  - **v2.1.0** (开发版) - 多语言支持：简体中文和英文界面
-- **v2.0.0** (Stable) - Left-hand traffic rule support, dynamic headers, enhanced file format
-  - **v2.0.0** (稳定版) - 左行规则支持、动态表头、增强的文件格式
+- **v2.1.0** (Stable) - Complete feature set: Left-hand traffic rules, multi-language support, configuration persistence
+  - **v2.1.0** (稳定版) - 完整功能集：左行规则、多语言支持、配置保存
 - **v1.3.0** - New features: exit arrows, extended entry bars, expanded plot window
   - **v1.3.0** - 新功能：出口箭头、延长进口条、扩大绘图窗口
 - **v1.2.0** - Bug fixes: division by zero, infinite slope/radius handling, improved geometric calculations
