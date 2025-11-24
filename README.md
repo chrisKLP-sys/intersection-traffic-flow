@@ -4,7 +4,7 @@
 
 ---
 
-**Latest Stable Release / 最新稳定版本: [v2.2.0](https://github.com/chrisKLP-sys/intersection-traffic-flow/releases/tag/v2.2.0)** 🎉
+**Latest Release / 最新版本: [v2.2.0](https://github.com/chrisKLP-sys/intersection-traffic-flow/releases/tag/v2.2.0)** 🎉
 
 <a name="english"></a>
 ## English
@@ -119,7 +119,7 @@ For more details, see the build configuration files:
 
 ```
 intersection-traffic-flow/
-├── 交叉口交通流量流向可视化工具2.2.py      # Main application (stable version)
+├── 交叉口交通流量流向可视化工具2.2.py      # Main application
 ├── build_all.py              # Build script
 ├── requirements.txt          # Python dependencies
 ├── setup_venv.py            # Virtual environment setup
@@ -187,7 +187,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 <a name="中文"></a>
 ## 中文
 
-**最新稳定版本: [v2.2.0](https://github.com/chrisKLP-sys/intersection-traffic-flow/releases/tag/v2.2.0)** 🎉
+**最新版本: [v2.2.0](https://github.com/chrisKLP-sys/intersection-traffic-flow/releases/tag/v2.2.0)** 🎉
 
 一款专业的交通流量可视化工具，用于绘制和分析交叉口的交通流量图。本工具帮助交通工程师和规划人员可视化和分析3路、4路、5路和6路交叉口的交通模式。
 
@@ -299,7 +299,7 @@ python build_all.py
 
 ```
 intersection-traffic-flow/
-├── 交叉口交通流量流向可视化工具2.2.py      # 主程序（稳定版本）
+├── 交叉口交通流量流向可视化工具2.2.py      # 主程序
 ├── build_all.py              # 构建脚本
 ├── requirements.txt          # Python依赖
 ├── setup_venv.py            # 虚拟环境设置

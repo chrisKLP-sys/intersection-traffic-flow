@@ -48,11 +48,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [2.1.0] - 2025-11-22
 
-**🎉 Stable Release / 稳定版本发布**
-
-This is a stable release with new features and improvements. Recommended for production use.
-这是一个稳定版本，包含新功能和改进。推荐用于生产环境。
-
 ### Added / 新增
 
 - Left-hand traffic rule support: Supports both left-hand and right-hand traffic rules
@@ -136,10 +131,6 @@ This is a stable release with new features and improvements. Recommended for pro
 
 ## [1.3.0] - 2025-11-22
 
-**🎉 Stable Release / 稳定版本发布**
-
-This is a stable release with new features and improvements. Recommended for production use.
-这是一个稳定版本，包含新功能和改进。推荐用于生产环境。
 
 ### Added / 新增
 
@@ -357,8 +348,8 @@ This is a stable release with new features and improvements. Recommended for pro
 
 ## Version History / 版本历史
 
-- **v2.1.0** (Stable) - Complete feature set: Left-hand traffic rules, multi-language support, configuration persistence
-  - **v2.1.0** (稳定版) - 完整功能集：左行规则、多语言支持、配置保存
+- **v2.1.0** - Complete feature set: Left-hand traffic rules, multi-language support, configuration persistence
+  - **v2.1.0** - 完整功能集：左行规则、多语言支持、配置保存
 - **v1.3.0** - New features: exit arrows, extended entry bars, expanded plot window
   - **v1.3.0** - 新功能：出口箭头、延长进口条、扩大绘图窗口
 - **v1.2.0** - Bug fixes: division by zero, infinite slope/radius handling, improved geometric calculations
