@@ -519,6 +519,25 @@ Main Street,Oak Avenue,Main Street,Oak Avenue<br>
             <div class="section" id="update">
                 <h2>9. Version History</h2>
                 
+                <h3>v2.2 Update</h3>
+                <div class="info">
+                    <h4>New Features:</h4>
+                    <ul>
+                        <li><strong>Angle Normalization Support</strong>: Supports arbitrary angle input, including negative values and values greater than 360°</li>
+                        <li><strong>Automatic Angle Normalization</strong>: All angles are automatically normalized to 0-360° range</li>
+                        <li><strong>Automatic Sorting</strong>: Data entries are automatically sorted by normalized angle (ascending)</li>
+                        <li><strong>Flexible Data Input</strong>: Supports entering data in any order</li>
+                        <li><strong>Original Data Preservation</strong>: Saves original angle values and order to file (not normalized/sorted)</li>
+                        <li><strong>Processed Data Display</strong>: UI displays normalized and sorted data for easy viewing and plotting</li>
+                    </ul>
+                    <h4>Technical Improvements:</h4>
+                    <ul>
+                        <li>Added angle normalization function, supports negative values and values greater than 360°</li>
+                        <li>Implemented dual data storage mechanism: raw data for file saving, processed data for display and plotting</li>
+                        <li>Optimized data sorting algorithm to ensure all related data (names, angles, flows) are sorted synchronously</li>
+                    </ul>
+                </div>
+                
                 <h3>v2.1 Update (Stable Release)</h3>
                 <div class="info">
                     <ul>
@@ -554,7 +573,7 @@ Main Street,Oak Avenue,Main Street,Oak Avenue<br>
         </div>
         
         <div class="footer">
-            <p><strong>Intersection Traffic Flow Visualization Tool v2.1</strong></p>
+            <p><strong>Intersection Traffic Flow Visualization Tool v2.2</strong></p>
             <p>Copyright (C) 江浦马保国 | You are welcome to copy and distribute this software</p>
             <p>For questions, please check the software "About" information or contact the developer</p>
         </div>

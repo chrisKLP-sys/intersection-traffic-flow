@@ -12,6 +12,40 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.2.0] - 2025-11-24
+
+**🎉 New Features / 新功能**
+
+### Added / 新增
+
+- Angle normalization: Supports arbitrary angle input (negative values, values > 360°)
+  - 角度归一化：支持任意角度输入（负值、大于360度的值）
+- Automatic angle normalization: All angles are automatically normalized to 0-360° range
+  - 自动角度归一化：所有角度自动归一化到0-360度范围
+- Automatic sorting: Data entries are automatically sorted by normalized angle (ascending)
+  - 自动排序：数据条目按归一化后的角度自动排序（从小到大）
+- Flexible data input: Supports entering data in any order
+  - 灵活数据输入：支持以任意顺序输入数据
+- Original data preservation: Saves original angle values and order to file (not normalized/sorted)
+  - 原始数据保存：保存原始角度值和顺序到文件（未归一化/排序）
+- Processed data display: UI displays normalized and sorted data
+  - 处理后数据显示：界面显示归一化并排序后的数据
+
+### Technical Details / 技术细节
+
+- Added `normalize_angle()` function to normalize angles to 0-360° range
+  - 添加 `normalize_angle()` 函数，将角度归一化到0-360度范围
+- Added `sort_by_angle()` method to Table class for automatic sorting
+  - 添加 `sort_by_angle()` 方法到Table类，用于自动排序
+- Dual data storage: `raw_data` for original values, `data` for processed values
+  - 双重数据存储：`raw_data` 存储原始值，`data` 存储处理后的值
+- File saving uses `raw_data` to preserve user's original input
+  - 文件保存使用 `raw_data` 以保留用户的原始输入
+- UI display and plotting use `data` (normalized and sorted)
+  - UI显示和绘图使用 `data`（归一化和排序后的）
+
+---
+
 ## [2.1.0] - 2025-11-22
 
 **🎉 Stable Release / 稳定版本发布**
