@@ -277,8 +277,8 @@ def build_application():
     
     print(f"  检测到系统: {system} ({system_info['machine']})")
     
-    # 只打包2.2版本
-    main_file = '交叉口交通流量流向可视化工具2.2.py'
+    # 打包2.3版本
+    main_file = '交叉口交通流量流向可视化工具2.3.py'
     
     if not os.path.exists(main_file):
         print(f"  ❌ 未找到主程序文件: {main_file}")
@@ -341,13 +341,15 @@ def build_application():
         print(f"  ⚠ 未找到字体目录: {fonts_dir}")
     
     # 构建 PyInstaller 命令
+    # 2.3版本需要包含update_checker.py模块
     cmd = [
         sys.executable, '-m', 'PyInstaller',
         '--clean',
         '--noconfirm',
         '--onefile',
-        '--name', '交叉口交通流量流向可视化工具2.2',
-        main_file
+        '--name', '交叉口交通流量流向可视化工具2.3',
+        main_file,
+        'update_checker.py'  # 添加更新检查模块
     ]
     
     # 添加图标（可执行文件图标）
@@ -398,7 +400,15 @@ def build_application():
         'webbrowser',  # 用于打开帮助文档
         'urllib.parse',  # 用于URL编码
         'urllib.request',  # 用于路径转换
+        'urllib.error',  # 用于错误处理
         'subprocess',  # 用于备用打开方式
+        'json',  # 用于解析API响应
+        'threading',  # 用于后台更新检查
+        'tempfile',  # 用于临时文件
+        'shutil',  # 用于文件操作
+        'platform',  # 用于系统检测
+        'win32api',  # 用于Windows版本信息（可选）
+        'win32file',  # 用于Windows文件操作（可选）
         'PIL',  # Pillow，matplotlib需要
         'PIL.Image',  # PIL的Image模块
         'PIL.PdfImagePlugin',  # PDF图像支持
@@ -436,9 +446,9 @@ def verify_build():
     system = platform.system()
     
     if system == 'Windows':
-        exe_path = os.path.join('dist', '交叉口交通流量流向可视化工具2.2.exe')
+        exe_path = os.path.join('dist', '交叉口交通流量流向可视化工具2.3.exe')
     else:
-        exe_path = os.path.join('dist', '交叉口交通流量流向可视化工具2.2')
+        exe_path = os.path.join('dist', '交叉口交通流量流向可视化工具2.3')
     
     if os.path.exists(exe_path):
         file_size = os.path.getsize(exe_path)
@@ -525,8 +535,8 @@ def main():
     if not check_python_version():
         sys.exit(1)
     
-    # 只打包2.2版本
-    main_file = '交叉口交通流量流向可视化工具2.2.py'
+    # 打包2.3版本
+    main_file = '交叉口交通流量流向可视化工具2.3.py'
     
     if not os.path.exists(main_file):
         print(f"❌ 错误: 未找到主程序文件: {main_file}")

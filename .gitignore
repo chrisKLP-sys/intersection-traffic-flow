@@ -70,6 +70,7 @@ dist/
 git_remove_tracked_files.bat
 GitHub_Desktop操作指南*.md
 RELEASE_NOTES*.md
+打包说明*.md
 
 # User configuration file (auto-generated, user-specific)
 config.txt
