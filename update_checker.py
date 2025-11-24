@@ -30,6 +30,76 @@ GITEE_API_LATEST = f"https://gitee.com/api/v5/repos/{GITEE_OWNER}/{GITEE_REPO}/r
 REQUEST_TIMEOUT = 10
 DOWNLOAD_TIMEOUT = 300
 
+# 配置文件名称
+CONFIG_FILE = 'config.txt'
+# GitHub token 配置文件（独立文件，不会被主程序重置）
+GITHUB_TOKEN_FILE = 'github_token.txt'
+
+
+def get_config_path():
+    """
+    获取配置文件路径
+    支持打包后的可执行文件和开发环境
+    """
+    if getattr(sys, 'frozen', False):
+        # 打包后的可执行文件，配置文件保存在可执行文件目录
+        base_path = os.path.dirname(sys.executable)
+    else:
+        # 开发环境，配置文件保存在脚本目录
+        base_path = os.path.dirname(os.path.abspath(__file__))
+    return os.path.join(base_path, CONFIG_FILE)
+
+
+def get_github_token_file_path():
+    """
+    获取 GitHub token 配置文件路径
+    支持打包后的可执行文件和开发环境
+    """
+    if getattr(sys, 'frozen', False):
+        # 打包后的可执行文件，配置文件保存在可执行文件目录
+        base_path = os.path.dirname(sys.executable)
+    else:
+        # 开发环境，配置文件保存在脚本目录
+        base_path = os.path.dirname(os.path.abspath(__file__))
+    return os.path.join(base_path, GITHUB_TOKEN_FILE)
+
+
+def get_github_token():
+    """
+    从独立的 GitHub token 配置文件读取 API token
+    返回: token字符串或None（如果未配置）
+    """
+    token_file_path = get_github_token_file_path()
+    if not os.path.exists(token_file_path):
+        return None
+    
+    try:
+        with open(token_file_path, 'r', encoding='utf-8') as f:
+            # 读取第一行非空、非注释的内容作为 token
+            for line in f:
+                line = line.strip()
+                # 跳过空行和注释行（以#开头的行）
+                if not line or line.startswith('#'):
+                    continue
+                # 如果行中包含 = 或 :，尝试解析
+                if '=' in line:
+                    _, value = line.split('=', 1)
+                    value = value.strip()
+                elif ':' in line:
+                    _, value = line.split(':', 1)
+                    value = value.strip()
+                else:
+                    # 如果整行就是 token（没有 key=value 格式）
+                    value = line
+                
+                if value:
+                    return value
+    except Exception:
+        # 如果读取失败，静默返回None（不影响程序运行）
+        pass
+    
+    return None
+
 
 def get_current_version():
     """
@@ -124,7 +194,7 @@ def compare_versions(current_version, latest_version):
 def check_github_update():
     """
     从GitHub检查更新
-    返回: (success, version, download_url, release_notes) 或 (False, None, None, None)
+    返回: (success, version, download_url, release_notes, tag_name, filename)
     """
     try:
         req = urllib.request.Request(GITHUB_API_LATEST)
@@ -132,27 +202,42 @@ def check_github_update():
         req.add_header('User-Agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36')
         req.add_header('Accept', 'application/vnd.github.v3+json')
         
+        # 如果配置了 GitHub token，添加认证头以提升 rate limit
+        github_token = get_github_token()
+        if github_token:
+            # 使用 Bearer 格式（GitHub API 推荐的标准格式）
+            req.add_header('Authorization', f'Bearer {github_token}')
+        
         with urllib.request.urlopen(req, timeout=REQUEST_TIMEOUT) as response:
-            data = json.loads(response.read().decode('utf-8'))
+            response_data = response.read().decode('utf-8')
+            data = json.loads(response_data)
             
             # 检查是否有错误信息
             if 'message' in data and 'tag_name' not in data:
-                print(f"GitHub API错误: {data.get('message', 'Unknown error')}")
-                return False, None, None, None
+                error_msg = data.get('message', 'Unknown error')
+                print(f"GitHub API错误: {error_msg}")
+                # 检查是否是认证问题
+                if 'Bad credentials' in error_msg or 'Invalid token' in error_msg:
+                    print("提示: GitHub token 可能无效或已过期，请检查 github_token.txt 中的 token")
+                return False, None, None, None, None, None
             
             # 提取版本号（tag_name可能包含'v'前缀）
             version = data.get('tag_name', '').lstrip('vV')
+            # 获取原始tag_name
+            tag_name = data.get('tag_name', '')
             if not version:
                 print("GitHub API响应中未找到tag_name")
-                return False, None, None, None
+                return False, None, None, None, None, None
             
             # 查找Windows exe文件
             download_url = None
+            exe_filename = None
             assets = data.get('assets', [])
             for asset in assets:
                 name = asset.get('name', '').lower()
                 if name.endswith('.exe') and 'windows' in name.lower():
                     download_url = asset.get('browser_download_url')
+                    exe_filename = asset.get('name', '')  # 保存原始文件名（包含中文）
                     if download_url:
                         break
             
@@ -162,13 +247,15 @@ def check_github_update():
                     name = asset.get('name', '').lower()
                     if name.endswith('.exe'):
                         download_url = asset.get('browser_download_url')
+                        exe_filename = asset.get('name', '')  # 保存原始文件名
                         if download_url:
                             break
             
             # 获取发布说明
             release_notes = data.get('body', '')
             
-            return True, version, download_url, release_notes
+            # 返回：success, version, download_url, release_notes, tag_name, filename
+            return True, version, download_url, release_notes, tag_name, exe_filename
             
     except urllib.error.HTTPError as e:
         error_msg = f"GitHub API HTTP错误 {e.code}: {e.reason}"
@@ -177,19 +264,27 @@ def check_github_update():
             error_data = json.loads(error_body)
             if 'message' in error_data:
                 error_msg += f" - {error_data['message']}"
+                # 检查是否是认证问题
+                if e.code == 401:
+                    print("提示: GitHub token 认证失败，请检查 github_token.txt 中的 token 是否正确")
+                elif e.code == 403:
+                    if 'rate limit' in error_data.get('message', '').lower():
+                        print("提示: 即使使用了 token，仍然遇到 rate limit，可能是 token 权限不足或 IP 被限制")
+                    else:
+                        print(f"提示: GitHub API 访问被拒绝 (403)，错误详情: {error_data.get('message', 'Unknown')}")
         except:
             pass
         print(error_msg)
-        return False, None, None, None
+        return False, None, None, None, None, None
     except urllib.error.URLError as e:
         print(f"GitHub API网络连接失败: {e.reason if hasattr(e, 'reason') else str(e)}")
-        return False, None, None, None
+        return False, None, None, None, None, None
     except json.JSONDecodeError as e:
         print(f"GitHub API响应解析失败: {e}")
-        return False, None, None, None
+        return False, None, None, None, None, None
     except Exception as e:
         print(f"检查GitHub更新时出错: {type(e).__name__}: {str(e)}")
-        return False, None, None, None
+        return False, None, None, None, None, None
 
 
 def check_gitee_update():
@@ -399,10 +494,12 @@ def check_update(source='github', callback=None):
     """
     检查更新（统一接口）
     source: 'github' 或 'gitee'
-    callback: 可选的回调函数，参数为 (success, version, download_url, release_notes, error)
-    返回: (success, version, download_url, release_notes, error_message)
+    callback: 可选的回调函数，参数为 (success, version, download_url, release_notes, error, tag_name, filename)
+    返回: (success, version, download_url, release_notes, error_message, tag_name, filename)
     """
     error_msg = None
+    tag_name = None
+    filename = None
     # 规范化source参数
     if source:
         source_lower = str(source).lower().strip()
@@ -411,9 +508,17 @@ def check_update(source='github', callback=None):
     
     try:
         if source_lower == 'github':
-            success, version, download_url, release_notes = check_github_update()
+            result = check_github_update()
+            # check_github_update现在返回6个值：success, version, download_url, release_notes, tag_name, filename
+            if len(result) == 6:
+                success, version, download_url, release_notes, tag_name, filename = result
+            else:
+                # 向后兼容：如果返回4个值，则tag_name和filename为None
+                success, version, download_url, release_notes = result[:4]
+                tag_name = None
+                filename = None
             if not success:
-                error_msg = f"无法连接到GitHub或解析响应失败。请检查网络连接或稍后重试。"
+                error_msg = f"无法连接到GitHub或解析响应失败。\n建议：请尝试使用Gitee更新源，或检查网络连接后重试。"
         elif source_lower == 'gitee':
             success, version, download_url, release_notes = check_gitee_update()
             if not success:
@@ -423,28 +528,28 @@ def check_update(source='github', callback=None):
         else:
             error_msg = f"不支持的更新源: {source}"
             if callback:
-                callback(False, None, None, None, error_msg)
-            return False, None, None, None, error_msg
+                callback(False, None, None, None, error_msg, None, None)
+            return False, None, None, None, error_msg, None, None
         
         if not success:
             if callback:
-                callback(False, None, None, None, error_msg)
-            return False, None, None, None, error_msg
+                callback(False, None, None, None, error_msg, None, None)
+            return False, None, None, None, error_msg, None, None
         
         if not download_url:
             error_msg = "未找到可用的下载链接。该版本可能尚未发布Windows版本。"
             if callback:
-                callback(False, version, None, None, error_msg)
-            return False, version, None, None, error_msg
+                callback(False, version, None, None, error_msg, None, None)
+            return False, version, None, None, error_msg, None, None
         
         if callback:
-            callback(True, version, download_url, release_notes, None)
+            callback(True, version, download_url, release_notes, None, tag_name, filename)
         
-        return True, version, download_url, release_notes, None
+        return True, version, download_url, release_notes, None, tag_name, filename
         
     except Exception as e:
         error_msg = f"检查更新时发生未知错误: {str(e)}"
         if callback:
-            callback(False, None, None, None, error_msg)
-        return False, None, None, None, error_msg
+            callback(False, None, None, None, error_msg, None, None)
+        return False, None, None, None, error_msg, None, None
 

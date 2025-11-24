@@ -2015,7 +2015,15 @@ def show_update_dialog(parent, source='gitee'):
             if not current_version:
                 current_version = "2.3.0"  # 默认版本
             
-            success, version, download_url, release_notes, error = update_checker.check_update(update_source)
+            # check_update 返回 7 个值: (success, version, download_url, release_notes, error_message, tag_name, filename)
+            result = update_checker.check_update(update_source)
+            if len(result) == 7:
+                success, version, download_url, release_notes, error, tag_name, filename = result
+            else:
+                # 向后兼容：如果返回 5 个值
+                success, version, download_url, release_notes, error = result[:5]
+                tag_name = None
+                filename = None
             
             # 更新UI（需要在主线程中执行）
             def update_ui():
@@ -2067,9 +2075,11 @@ def show_update_dialog(parent, source='gitee'):
             update_dialog.after(0, update_ui)
             
         except Exception as e:
+            # 捕获异常信息到局部变量，避免闭包问题
+            error_msg = str(e)
             def show_error():
                 status_label.config(text=t('update_error'), fg='#cc0000')
-                info_label.config(text=t('update_error_msg', error=str(e)))
+                info_label.config(text=t('update_error_msg', error=error_msg))
                 progress_bar.stop()
             update_dialog.after(0, show_error)
     

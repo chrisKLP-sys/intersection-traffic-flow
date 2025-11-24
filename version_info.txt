@@ -23,7 +23,7 @@ VSVersionInfo(
         StringStruct(u'FileVersion', u'2.3.0.0'),
         StringStruct(u'InternalName', u'交叉口交通流量流向可视化工具'),
         StringStruct(u'LegalCopyright', u'Copyright (c) 2025 交叉口交通流量流向可视化工具'),
-        StringStruct(u'OriginalFilename', u'交叉口交通流量流向可视化工具2.3.exe'),
+        StringStruct(u'OriginalFilename', u'交叉口交通流量流向可视化工具2.3.0.exe'),
         StringStruct(u'ProductName', u'交叉口交通流量流向可视化工具'),
         StringStruct(u'ProductVersion', u'2.3.0.0'),
         StringStruct(u'Comments', u'https://github.com/chrisKLP-sys/intersection-traffic-flow')]

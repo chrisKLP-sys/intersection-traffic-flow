@@ -75,6 +75,9 @@ RELEASE_NOTES*.md
 # User configuration file (auto-generated, user-specific)
 config.txt
 
+# GitHub API token file (sensitive information, should not be uploaded)
+github_token.txt
+
 # PyInstaller spec files (auto-generated)
 *.spec
 
