@@ -12,6 +12,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.3.0] - 2025-01-XX
+
+**🎉 New Features / 新功能**
+
+### Added / 新增
+
+- Online update feature: Check for updates from GitHub or Gitee
+  - 在线更新功能：支持从 GitHub 或 Gitee 检查更新
+- Update check interface: Manual update check available in "About" dialog
+  - 更新检查界面：在"关于"对话框中可以手动检查更新
+- Update source selection: Support for choosing GitHub or Gitee as update source
+  - 更新源选择：支持选择从 GitHub 或 Gitee 检查更新
+- Version information display: Current program version displayed in "About" dialog
+  - 版本信息显示：在"关于"对话框中显示当前程序版本号
+- Update download and installation: Can directly download and install updates when new version is found
+  - 更新下载和安装：发现新版本后可以直接下载并安装更新
+
+### Usage / 使用说明
+
+- Click "Help" → "About" in the menu bar to open the About dialog
+  - 点击菜单栏"帮助" → "关于"，打开关于对话框
+- Click "Check for Updates" button in the About dialog
+  - 在关于对话框中点击"检查更新"按钮
+- Select update source (GitHub or Gitee)
+  - 选择更新源（GitHub 或 Gitee）
+- If a new version is available, click "Download" button to download and install
+  - 如果有新版本，可以点击"下载"按钮下载并安装
+- The program automatically checks version and prompts if update is needed
+  - 程序会自动检查版本并提示是否需要更新
+
+---
+
 ## [2.2.0] - 2025-11-24
 
 **🎉 New Features / 新功能**
