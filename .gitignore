@@ -83,6 +83,8 @@ github_token.txt
 
 # Version info files (auto-generated)
 version_info.rc
+# Temporary version info files for specific versions (test builds)
+version_info_*.txt
 
 # Old version files (keep only latest versions)
 交叉口流量绘制1.0.py
