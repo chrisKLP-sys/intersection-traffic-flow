@@ -77,6 +77,10 @@ config.txt
 
 # GitHub API token file (sensitive information, should not be uploaded)
 github_token.txt
+# Gitee API token file (sensitive information, should not be uploaded)
+gitee_token.txt
+# Release sync script (local tool, should not be uploaded)
+sync_releases_to_gitee.py
 
 # PyInstaller spec files (auto-generated)
 *.spec
@@ -107,3 +111,19 @@ _local_files/
 # Font files (keep only the necessary font file, ignore zip and other variants)
 fonts/SourceHanSans.zip
 fonts/SourceHanSans/
+
+# Payment QR code files (sensitive information, should not be uploaded to GitHub)
+qrcode.jpg
+alipay_qrcode.jpg
+wechatpay_qrcode.jpg
+
+# Icon files (auto-generated ICO from PNG, if exists)
+Sparrow.ico
+# Temporary files for icon conversion
+sparrow_base64.txt
+convert_icon_for_html.py
+rename_file.py
+cleanup_for_release.py
+delete_release_v2.3.py
+create_release_v2.3.0.py
+update_gitee_release.py

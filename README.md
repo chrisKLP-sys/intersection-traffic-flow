@@ -4,7 +4,7 @@
 
 ---
 
-**Latest Release / 最新版本: [v2.3](https://github.com/chrisKLP-sys/intersection-traffic-flow/releases/tag/v2.3)** 🎉
+**Latest Release / 最新版本: [v2.3.0](https://github.com/chrisKLP-sys/intersection-traffic-flow/releases/tag/v2.3.0)** 🎉
 
 <a name="english"></a>
 ## English
@@ -25,6 +25,8 @@ A professional Python application for visualizing traffic flow at intersections.
 - 🌐 Multi-language interface: Simplified Chinese and English
 - ⚙️ Configuration persistence: Saves language and traffic rule settings
 - 🔄 Online update: Check for updates from GitHub or Gitee
+- 🎯 Application icon: Beautiful Sparrow icon for all windows
+- 📝 Flow input guidance: Detailed instructions for turning flow input order
 
 ### Screenshots
 
@@ -79,18 +81,18 @@ pip install -r requirements.txt
 
 **Windows:**
 ```cmd
-python 交叉口交通流量流向可视化工具2.3.py
+python 交叉口交通流量流向可视化工具2.3.0.py
 ```
 
 **macOS/Linux:**
 ```bash
-python3 交叉口交通流量流向可视化工具2.3.py
+python3 交叉口交通流量流向可视化工具2.3.0.py
 ```
 
 Or if using virtual environment:
 ```bash
-venv\Scripts\python.exe 交叉口交通流量流向可视化工具2.3.py  # Windows
-venv/bin/python3 交叉口交通流量流向可视化工具2.3.py           # macOS/Linux
+venv\Scripts\python.exe 交叉口交通流量流向可视化工具2.3.0.py  # Windows
+venv/bin/python3 交叉口交通流量流向可视化工具2.3.0.py           # macOS/Linux
 ```
 
 #### Basic workflow
@@ -120,7 +122,7 @@ For more details, see the build configuration files:
 
 ```
 intersection-traffic-flow/
-├── 交叉口交通流量流向可视化工具2.3.py      # Main application
+├── 交叉口交通流量流向可视化工具2.3.0.py      # Main application
 ├── build_all.py              # Build script
 ├── requirements.txt          # Python dependencies
 ├── setup_venv.py            # Virtual environment setup
@@ -206,6 +208,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - 🌐 多语言界面：简体中文和英文
 - ⚙️ 配置保存功能：自动保存语言和通行规则设置
 - 🔄 在线更新：支持从 GitHub 或 Gitee 检查更新
+- 🎯 应用图标：精美的 Sparrow 图标，所有窗口统一显示
+- 📝 输入指引：详细的转向流量输入顺序说明
 
 ### 截图
 
@@ -260,18 +264,18 @@ pip install -r requirements.txt
 
 **Windows:**
 ```cmd
-python 交叉口交通流量流向可视化工具2.3.py
+python 交叉口交通流量流向可视化工具2.3.0.py
 ```
 
 **macOS/Linux:**
 ```bash
-python3 交叉口交通流量流向可视化工具2.3.py
+python3 交叉口交通流量流向可视化工具2.3.0.py
 ```
 
 如果使用虚拟环境：
 ```bash
-venv\Scripts\python.exe 交叉口交通流量流向可视化工具2.3.py  # Windows
-venv/bin/python3 交叉口交通流量流向可视化工具2.3.py           # macOS/Linux
+venv\Scripts\python.exe 交叉口交通流量流向可视化工具2.3.0.py  # Windows
+venv/bin/python3 交叉口交通流量流向可视化工具2.3.0.py           # macOS/Linux
 ```
 
 #### 基本工作流程
@@ -301,7 +305,7 @@ python build_all.py
 
 ```
 intersection-traffic-flow/
-├── 交叉口交通流量流向可视化工具2.3.py      # 主程序
+├── 交叉口交通流量流向可视化工具2.3.0.py      # 主程序
 ├── build_all.py              # 构建脚本
 ├── requirements.txt          # Python依赖
 ├── setup_venv.py            # 虚拟环境设置
@@ -374,7 +378,7 @@ intersection-traffic-flow/
 
 1. 使用批处理文件：直接运行 `激活虚拟环境.bat`
 2. 使用 CMD：运行 `venv\Scripts\activate.bat`
-3. 直接使用 Python：`venv\Scripts\python.exe 交叉口交通流量流向可视化工具2.2.py`
+3. 直接使用 Python：`venv\Scripts\python.exe 交叉口交通流量流向可视化工具2.3.0.py`
 
 更多详情请参考 `README_虚拟环境使用说明.md`。
 

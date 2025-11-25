@@ -10,6 +10,12 @@ import sys
 import platform
 import subprocess
 import shutil
+import io
+
+# 设置标准输出编码为UTF-8（Windows兼容）
+if sys.platform == 'win32':
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
 
 def print_header(text):
     """打印分隔线"""
@@ -244,8 +250,8 @@ def build_application():
     
     print(f"  检测到系统: {system} ({system_info['machine']})")
     
-    # 打包2.3版本
-    main_file = '交叉口交通流量流向可视化工具2.3.py'
+    # 打包2.3.0版本
+    main_file = '交叉口交通流量流向可视化工具2.3.0.py'
     
     if not os.path.exists(main_file):
         print(f"  ❌ 未找到主程序文件: {main_file}")
@@ -274,21 +280,55 @@ def build_application():
     for help_file in help_files:
         datas.append((help_file, '.'))
     
+    # 检查并添加二维码文件
+    qrcode_file = 'qrcode.jpg'
+    if os.path.exists(qrcode_file):
+        datas.append((qrcode_file, '.'))
+        print(f"  ✓ 找到二维码文件: {qrcode_file}")
+    else:
+        print(f"  ⚠ 未找到二维码文件: {qrcode_file}")
+    
     # 检查图标文件是否存在
     icon_file = None
+    # 优先使用Sparrow.png作为图标
+    sparrow_png = 'Sparrow.png'
     icon_ico = 'app_icon.ico'
     icon_png = 'app_icon.png'
     
-    # 优先使用ICO文件（可执行文件图标）
-    if os.path.exists(icon_ico):
+    # 优先使用Sparrow.png（用于窗口图标）
+    if os.path.exists(sparrow_png):
+        datas.append((sparrow_png, '.'))
+        print(f"  ✓ 找到并添加窗口图标: {sparrow_png}")
+        # 如果存在Sparrow.ico，也用于可执行文件图标
+        sparrow_ico = 'Sparrow.ico'
+        if os.path.exists(sparrow_ico):
+            icon_file = sparrow_ico
+            print(f"  ✓ 找到可执行文件图标: {sparrow_ico}")
+        else:
+            # 如果没有ICO文件，尝试从PNG转换（需要PIL）
+            try:
+                from PIL import Image
+                # 尝试创建ICO文件
+                img = Image.open(sparrow_png)
+                # 创建多个尺寸的图标（Windows需要）
+                sizes = [(256, 256), (128, 128), (64, 64), (32, 32), (16, 16)]
+                img.save(sparrow_ico, format='ICO', sizes=sizes)
+                icon_file = sparrow_ico
+                print(f"  ✓ 已从PNG生成ICO文件: {sparrow_ico}")
+            except Exception as e:
+                print(f"  ⚠ 无法从PNG生成ICO文件: {e}")
+                print(f"  ⚠ 可执行文件将使用默认图标，窗口图标仍会使用Sparrow.png")
+                # 尝试使用旧的ICO文件作为后备
+                if os.path.exists(icon_ico):
+                    icon_file = icon_ico
+                    print(f"  ✓ 使用后备图标文件: {icon_ico}")
+    # 向后兼容：如果没有Sparrow.png，使用app_icon
+    elif os.path.exists(icon_ico):
         icon_file = icon_ico
         print(f"  ✓ 找到图标文件: {icon_ico}")
     elif os.path.exists(icon_png):
-        print(f"  ✓ 找到PNG图标: {icon_png}，建议运行 convert_icon.py 生成ICO文件")
-    
-    # 将PNG图标添加到数据文件（用于窗口图标）
-    if os.path.exists(icon_png):
         datas.append((icon_png, '.'))
+        print(f"  ✓ 找到PNG图标: {icon_png}，建议运行 convert_icon.py 生成ICO文件")
         print(f"  ✓ 添加窗口图标: {icon_png}")
     
     # 检查并添加字体文件
@@ -314,7 +354,7 @@ def build_application():
         '--clean',
         '--noconfirm',
         '--onefile',
-        '--name', '交叉口交通流量流向可视化工具2.3',
+        '--name', '交叉口交通流量流向可视化工具2.3.0',
         '--collect-all', 'pywin32',  # 收集所有pywin32相关文件（包括DLL）
         main_file
     ]
@@ -420,9 +460,9 @@ def verify_build():
     system = platform.system()
     
     if system == 'Windows':
-        exe_path = os.path.join('dist', '交叉口交通流量流向可视化工具2.3.exe')
+        exe_path = os.path.join('dist', '交叉口交通流量流向可视化工具2.3.0.exe')
     else:
-        exe_path = os.path.join('dist', '交叉口交通流量流向可视化工具2.3')
+        exe_path = os.path.join('dist', '交叉口交通流量流向可视化工具2.3.0')
     
     # 只检查文件是否存在（比对文件名），不检查文件大小等详细信息
     if os.path.exists(exe_path):
@@ -508,7 +548,7 @@ def main():
         sys.exit(1)
     
     # 打包2.3版本
-    main_file = '交叉口交通流量流向可视化工具2.3.py'
+    main_file = '交叉口交通流量流向可视化工具2.3.0.py'
     
     if not os.path.exists(main_file):
         print(f"❌ 错误: 未找到主程序文件: {main_file}")

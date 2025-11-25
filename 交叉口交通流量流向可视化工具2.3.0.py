@@ -149,6 +149,12 @@ LANGUAGES = {
         'confirm_new_file': '当前数据已修改，确定要新建文件吗？未保存的修改将丢失。',
         'about': '关于',
         
+        # 捐献相关
+        'btn_donate': '捐献',
+        'donate_title': '捐献支持',
+        'donate_message': '一分也是爱 ❤️\n\n您的支持，是我持续维护和升级此软件的最大动力。\n\n不捐也没关系，所有功能永久免费开放。\n\n感谢每一位同行的信任与鼓励！\n\n如果提示"验证姓氏"，请输入"何"',
+        'flow_order_notice': '请注意转向流量的输入顺序，以道路中心线为基准，靠近中心线的流线优先输入，例如，右行规则下，4路交叉口的输入顺序分别为：掉头、左转、直行、右转，左行规则下则为：掉头、右转、直行、左转。',
+        
         # 更新相关
         'btn_check_update': '检查更新',
         'update_checking': '正在检查更新...',
@@ -281,6 +287,12 @@ LANGUAGES = {
         'btn_clear_data': 'Clear Data',
         'btn_about': 'About',
         
+        # Donation related
+        'btn_donate': 'Donate',
+        'donate_title': 'Donation Support',
+        'donate_message': 'Every penny counts! ❤️\n\nYour support is the greatest motivation for me to continue maintaining and upgrading this software.\n\nNo donation is fine, all features are permanently free.\n\nThank you for every colleague\'s trust and encouragement!\n\nIf prompted for "verification surname", please enter "何"',
+        'flow_order_notice': 'Please note the input order of turning flows. Based on the road centerline, flows closer to the centerline should be entered first. For example, under right-hand traffic rule, the input order for a 4-way intersection is: U-turn, Left turn, Straight, Right turn. Under left-hand traffic rule, it is: U-turn, Right turn, Straight, Left turn.',
+        
         # Other messages
         'parse_error': 'Error parsing data: {error}',
         'draw_error': 'Error drawing diagram: {error}',
@@ -358,48 +370,194 @@ _ui_components = {
     'root': None,
 }
 
+# 全局变量：存储图标对象引用
+_app_icon = None
+_cached_pil_image = None  # 缓存缩放后的PIL Image对象（避免重复加载和缩放大文件）
+
+def set_window_icon(window):
+    """设置窗口图标为Sparrow.png（使用缓存优化性能）"""
+    global _app_icon, _cached_pil_image
+    try:
+        # 获取图标文件路径
+        if getattr(sys, 'frozen', False):
+            base_path = sys._MEIPASS
+        else:
+            base_path = os.path.dirname(os.path.abspath(__file__))
+        
+        icon_path = os.path.join(base_path, 'Sparrow.png')
+        
+        if os.path.exists(icon_path):
+            # 尝试使用PIL加载PNG图片
+            try:
+                from PIL import Image, ImageTk
+                
+                # 如果已有缓存的缩放图像，直接使用（避免重复加载和缩放大文件）
+                if _cached_pil_image is None:
+                    # 第一次加载：读取并缩放图标
+                    pil_image = Image.open(icon_path)
+                    # 优化：如果图标太大，先缩放到合适的大小（32x32或64x64）
+                    # 窗口图标通常只需要小尺寸，大图标会导致加载缓慢和抖动
+                    max_icon_size = 64  # 最大图标尺寸
+                    if pil_image.width > max_icon_size or pil_image.height > max_icon_size:
+                        # 保持宽高比缩放（使用兼容的重采样方法）
+                        try:
+                            # PIL 10.0.0+ 使用 Image.Resampling.LANCZOS
+                            pil_image.thumbnail((max_icon_size, max_icon_size), Image.Resampling.LANCZOS)
+                        except AttributeError:
+                            # 旧版本使用 Image.LANCZOS
+                            try:
+                                pil_image.thumbnail((max_icon_size, max_icon_size), Image.LANCZOS)
+                            except AttributeError:
+                                # 更旧的版本使用 ANTIALIAS
+                                pil_image.thumbnail((max_icon_size, max_icon_size), Image.ANTIALIAS)
+                    # 缓存缩放后的PIL图像
+                    _cached_pil_image = pil_image
+                else:
+                    # 使用缓存的图像（避免重复加载和缩放）
+                    pil_image = _cached_pil_image
+                
+                # 为当前窗口创建PhotoImage对象（每个窗口需要自己的PhotoImage）
+                icon_image = ImageTk.PhotoImage(pil_image, master=window)
+                window.iconphoto(True, icon_image)
+                
+                # 保持引用，避免被垃圾回收
+                if _app_icon is None:
+                    _app_icon = []
+                # 避免重复添加相同的图标引用
+                if icon_image not in _app_icon:
+                    _app_icon.append(icon_image)
+                return True
+            except ImportError:
+                # 如果没有PIL，尝试使用PhotoImage（仅支持GIF/PNG，但可能不支持PNG）
+                try:
+                    from tkinter import PhotoImage
+                    icon_image = PhotoImage(file=icon_path, master=window)
+                    window.iconphoto(True, icon_image)
+                    if _app_icon is None:
+                        _app_icon = []
+                    if icon_image not in _app_icon:
+                        _app_icon.append(icon_image)
+                    return True
+                except Exception as e:
+                    print(f"使用PhotoImage加载图标失败: {e}")
+            except Exception as e:
+                print(f"使用PIL加载图标失败: {e}")
+        
+        # 如果PNG加载失败，尝试使用ICO文件
+        try:
+            # 尝试使用Sparrow.ico（如果存在）
+            ico_path = os.path.join(base_path, 'Sparrow.ico')
+            if os.path.exists(ico_path):
+                window.iconbitmap(ico_path)
+                return True
+            # 尝试使用app_icon.ico（如果存在）
+            ico_path = os.path.join(base_path, 'app_icon.ico')
+            if os.path.exists(ico_path):
+                window.iconbitmap(ico_path)
+                return True
+        except Exception as e:
+            print(f"使用ICO文件设置图标失败: {e}")
+        
+        return False
+    except Exception as e:
+        # 设置图标失败不影响程序运行
+        print(f"设置窗口图标失败: {e}")
+        return False
+
 def update_ui_language():
     """更新所有界面文本为当前语言"""
     global _ui_components
     
-    # 更新窗口标题
-    if _ui_components['root']:
+    try:
+        # 更新窗口标题
+        if _ui_components.get('root'):
+            try:
+                table = _ui_components.get('table')
+                if table and hasattr(table, 'file_name') and table.file_name:
+                    file_name = os.path.basename(table.file_name)
+                    file_name_without_ext = os.path.splitext(file_name)[0]
+                    if table and hasattr(table, 'is_modified') and table.is_modified:
+                        _ui_components['root'].title(f"{file_name_without_ext} - {t('app_title_unsaved').split(' - ')[-1]}")
+                    else:
+                        _ui_components['root'].title(file_name_without_ext)
+                else:
+                    if table and hasattr(table, 'is_modified') and table.is_modified:
+                        _ui_components['root'].title(t('app_title_unsaved'))
+                    else:
+                        _ui_components['root'].title(t('app_title'))
+            except Exception as e:
+                # 如果更新标题失败，至少设置基本标题
+                try:
+                    _ui_components['root'].title(t('app_title'))
+                except:
+                    pass
+        
+        # 更新按钮文本
+        buttons = _ui_components.get('buttons', {})
+        try:
+            if 'new_file' in buttons and buttons['new_file']:
+                buttons['new_file'].config(text=t('btn_new_file'))
+        except:
+            pass
+        try:
+            if 'load' in buttons and buttons['load']:
+                buttons['load'].config(text=t('btn_load'))
+        except:
+            pass
+        try:
+            if 'clear_data' in buttons and buttons['clear_data']:
+                buttons['clear_data'].config(text=t('btn_clear_data'))
+        except:
+            pass
+        try:
+            if 'save' in buttons and buttons['save']:
+                buttons['save'].config(text=t('btn_save'))
+        except:
+            pass
+        try:
+            if 'save_as' in buttons and buttons['save_as']:
+                buttons['save_as'].config(text=t('btn_save_as'))
+        except:
+            pass
+        try:
+            if 'plot' in buttons and buttons['plot']:
+                buttons['plot'].config(text=t('btn_draw'))
+        except:
+            pass
+        try:
+            if 'help' in buttons and buttons['help']:
+                buttons['help'].config(text=t('btn_help'))
+        except:
+            pass
+        try:
+            if 'about' in buttons and buttons['about']:
+                buttons['about'].config(text=t('btn_about'))
+        except:
+            pass
+        
+        # 更新表格（如果存在且有效）
         table = _ui_components.get('table')
-        if table and hasattr(table, 'file_name') and table.file_name:
-            file_name = os.path.basename(table.file_name)
-            file_name_without_ext = os.path.splitext(file_name)[0]
-            if table and hasattr(table, 'is_modified') and table.is_modified:
-                _ui_components['root'].title(f"{file_name_without_ext} - {t('app_title_unsaved').split(' - ')[-1]}")
-            else:
-                _ui_components['root'].title(file_name_without_ext)
-        else:
-            if table and hasattr(table, 'is_modified') and table.is_modified:
-                _ui_components['root'].title(t('app_title_unsaved'))
-            else:
-                _ui_components['root'].title(t('app_title'))
-    
-    # 更新按钮文本
-    buttons = _ui_components.get('buttons', {})
-    if 'new_file' in buttons:
-        buttons['new_file'].config(text=t('btn_new_file'))
-    if 'load' in buttons:
-        buttons['load'].config(text=t('btn_load'))
-    if 'clear_data' in buttons:
-        buttons['clear_data'].config(text=t('btn_clear_data'))
-    if 'save' in buttons:
-        buttons['save'].config(text=t('btn_save'))
-    if 'save_as' in buttons:
-        buttons['save_as'].config(text=t('btn_save_as'))
-    if 'plot' in buttons:
-        buttons['plot'].config(text=t('btn_draw'))
-    if 'help' in buttons:
-        buttons['help'].config(text=t('btn_help'))
-    if 'about' in buttons:
-        buttons['about'].config(text=t('btn_about'))
-    
-    # 更新表格（如果存在）
-    if _ui_components.get('table'):
-        _ui_components['table'].update_language()
+        if table:
+            try:
+                # 检查table对象是否仍然有效（没有被销毁）
+                # Table继承自tk.Frame，应该有winfo_exists方法
+                if hasattr(table, 'winfo_exists'):
+                    try:
+                        exists = table.winfo_exists()
+                        if exists and hasattr(table, 'update_language'):
+                            table.update_language()
+                    except:
+                        # 如果检查失败，尝试直接调用update_language
+                        if hasattr(table, 'update_language'):
+                            table.update_language()
+                elif hasattr(table, 'update_language'):
+                    # 如果没有winfo_exists方法，直接尝试调用
+                    table.update_language()
+            except Exception as e:
+                # 如果更新表格失败，打印错误但不影响其他组件更新
+                print(f"更新表格语言失败: {e}")
+    except Exception as e:
+        print(f"更新界面语言时出错: {e}")
 
 def change_language(lang_code):
     """切换语言（全局生效）"""
@@ -407,7 +565,7 @@ def change_language(lang_code):
         # 更新主界面（如果已创建）
         if _ui_components.get('root'):
             update_ui_language()
-            # 重新调整窗口大小以适应新的文本长度
+            # 重新调整窗口大小以适应新的文本长度（保持位置）
             root = _ui_components.get('root')
             if root:
                 adjust_window_size(root)
@@ -877,9 +1035,24 @@ class Table(tk.Frame):
         notice_label.grid(row=0, column=0, columnspan=columns, padx=5, pady=(5, 10), sticky='ew')
         self.notice_label = notice_label  # 保存引用以便更新语言
         
+        # 添加转向流量输入顺序提示 - 在方位角提示之后
+        flow_order_label = tk.Label(self,
+                                   text=t('flow_order_notice'),
+                                   bg='#e7f3ff',  # 浅蓝色背景
+                                   fg='#004085',  # 深蓝色文字
+                                   font=(font_family, 9),
+                                   padx=12,
+                                   pady=10,
+                                   relief='flat',
+                                   borderwidth=0,
+                                   justify='left',
+                                   wraplength=800)
+        flow_order_label.grid(row=1, column=0, columnspan=columns, padx=5, pady=(0, 12), sticky='ew')
+        self.flow_order_label = flow_order_label  # 保存引用以便更新语言
+        
         # 添加交通规则选择控件
         rule_frame = tk.Frame(self, bg='white')
-        rule_frame.grid(row=1, column=0, columnspan=columns, padx=5, pady=5, sticky='w')
+        rule_frame.grid(row=2, column=0, columnspan=columns, padx=5, pady=5, sticky='w')
         self.rule_label = tk.Label(rule_frame, text=t('traffic_rule'), bg='white')
         self.rule_label.pack(side=tk.LEFT, padx=5)
         self.traffic_rule_var = tk.StringVar(value=traffic_rule)
@@ -894,7 +1067,11 @@ class Table(tk.Frame):
         self.heading_labels = []
         for column in range(columns):
             label = ttk.Label(self, text=headings[column])
-            label.grid(row=2, column=column, padx=5, pady=5, sticky='w')  # 改为row=2，因为提示标签和规则选择占用了row=0和row=1
+            # 表头对齐：第一列（进口编号）左对齐，其他列也左对齐以匹配Entry
+            if column == 0:
+                label.grid(row=3, column=column, padx=5, pady=5, sticky='w')
+            else:
+                label.grid(row=3, column=column, padx=5, pady=5, sticky='w')
             self.heading_labels.append(label)
 
         # 生成数据行（根据路数）
@@ -905,11 +1082,12 @@ class Table(tk.Frame):
         for row in range(1, num_entries + 1):
             current_row = []
             direction = ttk.Label(self, text=f"{t('entry')}{row}")
-            direction.grid(row=row+2, column=0, padx=5, pady=5, sticky='w')  # row+2因为表头在row=2
+            direction.grid(row=row+3, column=0, padx=5, pady=5, sticky='w')  # row+3因为表头在row=3
             for column in range(1, columns):
                 entry = ttk.Entry(self, width=10)
                 entry.bind('<KeyRelease>', self.mark_modified)
-                entry.grid(row=row+2, column=column, padx=5, pady=5)  # row+2因为表头在row=2
+                # 数据框对齐：与表头保持一致，使用相同的padx和sticky
+                entry.grid(row=row+3, column=column, padx=5, pady=5, sticky='w')  # row+3因为表头在row=3
                 # 如果是方位角列（第3列，索引为2），设置默认值
                 if column == 2:  # 方位角列（column 0是进口编号，column 1是进口名称，column 2是方位角）
                     default_angle = default_angles[row - 1]  # row从1开始，所以减1
@@ -951,36 +1129,72 @@ class Table(tk.Frame):
     
     def update_language(self):
         """更新表格中的语言文本"""
-        # 更新交通规则标签
-        if hasattr(self, 'rule_label'):
-            self.rule_label.config(text=t('traffic_rule'))
-        if hasattr(self, 'rule_right'):
-            self.rule_right.config(text=t('right_hand_rule'))
-        if hasattr(self, 'rule_left'):
-            self.rule_left.config(text=t('left_hand_rule'))
-        
-        # 更新表头
-        if hasattr(self, 'heading_labels') and len(self.heading_labels) >= 3:
-            self.heading_labels[0].config(text=t('entry_number'))
-            self.heading_labels[1].config(text=t('entry_name'))
-            self.heading_labels[2].config(text=t('angle'))
+        try:
+            # 更新交通规则标签
+            try:
+                if hasattr(self, 'rule_label') and self.rule_label:
+                    self.rule_label.config(text=t('traffic_rule'))
+            except:
+                pass
+            try:
+                if hasattr(self, 'rule_right') and self.rule_right:
+                    self.rule_right.config(text=t('right_hand_rule'))
+            except:
+                pass
+            try:
+                if hasattr(self, 'rule_left') and self.rule_left:
+                    self.rule_left.config(text=t('left_hand_rule'))
+            except:
+                pass
             
-            # 如果是4路交叉口，更新流向表头
-            if self.num_entries == 4 and len(self.heading_labels) >= 7:
-                if self.traffic_rule == 'left':
-                    self.heading_labels[3].config(text=t('u_turn'))
-                    self.heading_labels[4].config(text=t('right_turn'))
-                    self.heading_labels[5].config(text=t('straight'))
-                    self.heading_labels[6].config(text=t('left_turn'))
-                else:
-                    self.heading_labels[3].config(text=t('u_turn'))
-                    self.heading_labels[4].config(text=t('left_turn'))
-                    self.heading_labels[5].config(text=t('straight'))
-                    self.heading_labels[6].config(text=t('right_turn'))
-        
-        # 更新方位角提示
-        if hasattr(self, 'notice_label'):
-            self.notice_label.config(text=t('angle_notice'), wraplength=800)
+            # 更新表头
+            try:
+                if hasattr(self, 'heading_labels') and self.heading_labels and len(self.heading_labels) >= 3:
+                    if len(self.heading_labels) > 0 and self.heading_labels[0]:
+                        self.heading_labels[0].config(text=t('entry_number'))
+                    if len(self.heading_labels) > 1 and self.heading_labels[1]:
+                        self.heading_labels[1].config(text=t('entry_name'))
+                    if len(self.heading_labels) > 2 and self.heading_labels[2]:
+                        self.heading_labels[2].config(text=t('angle'))
+                    
+                    # 如果是4路交叉口，更新流向表头
+                    if self.num_entries == 4 and len(self.heading_labels) >= 7:
+                        if self.traffic_rule == 'left':
+                            if len(self.heading_labels) > 3 and self.heading_labels[3]:
+                                self.heading_labels[3].config(text=t('u_turn'))
+                            if len(self.heading_labels) > 4 and self.heading_labels[4]:
+                                self.heading_labels[4].config(text=t('right_turn'))
+                            if len(self.heading_labels) > 5 and self.heading_labels[5]:
+                                self.heading_labels[5].config(text=t('straight'))
+                            if len(self.heading_labels) > 6 and self.heading_labels[6]:
+                                self.heading_labels[6].config(text=t('left_turn'))
+                        else:
+                            if len(self.heading_labels) > 3 and self.heading_labels[3]:
+                                self.heading_labels[3].config(text=t('u_turn'))
+                            if len(self.heading_labels) > 4 and self.heading_labels[4]:
+                                self.heading_labels[4].config(text=t('left_turn'))
+                            if len(self.heading_labels) > 5 and self.heading_labels[5]:
+                                self.heading_labels[5].config(text=t('straight'))
+                            if len(self.heading_labels) > 6 and self.heading_labels[6]:
+                                self.heading_labels[6].config(text=t('right_turn'))
+            except Exception as e:
+                print(f"更新表头语言失败: {e}")
+            
+            # 更新方位角提示
+            try:
+                if hasattr(self, 'notice_label') and self.notice_label:
+                    self.notice_label.config(text=t('angle_notice'), wraplength=800)
+            except:
+                pass
+            
+            # 更新转向流量输入顺序提示
+            try:
+                if hasattr(self, 'flow_order_label') and self.flow_order_label:
+                    self.flow_order_label.config(text=t('flow_order_notice'), wraplength=800)
+            except:
+                pass
+        except Exception as e:
+            print(f"更新表格语言时出错: {e}")
 
     def sort_by_angle(self):
         """根据归一化后的角度对所有进口数据进行排序，并更新UI显示"""
@@ -1190,6 +1404,8 @@ def select_intersection_type():
     # 直接创建一个独立的对话框窗口
     dialog = tk.Tk()
     dialog.title(t('select_intersection_type'))
+    # 设置窗口图标
+    set_window_icon(dialog)
     dialog.resizable(False, False)
     
     # 立即隐藏窗口，避免闪现
@@ -1594,10 +1810,13 @@ def load_data_from_file(file_name, table_instance, root_instance):
                 table_instance.pack()
             # 更新全局table引用
             table = table_instance
+            # 更新_ui_components中的table引用
+            global _ui_components
+            _ui_components['table'] = table_instance
             # 重新绑定按钮
             if 'plot_button' in globals():
                 plot_button.config(command=lambda: plot_traffic_flow(table))
-            # 调整窗口大小以适应新表格
+            # 调整窗口大小以适应新表格（保持位置）
             root_instance.update_idletasks()
             root_instance.update()
             adjust_window_size(root_instance)
@@ -1611,9 +1830,11 @@ def load_data_from_file(file_name, table_instance, root_instance):
         if hasattr(table_instance, 'traffic_rule_var'):
             table_instance.traffic_rule_var.set(traffic_rule)
         table_instance.is_modified = False
+        # 确保_ui_components中的table引用是最新的
+        _ui_components['table'] = table_instance
         if hasattr(update_window_title, 'root'):
             update_window_title()
-        # 调整窗口大小以适应内容
+        # 调整窗口大小以适应内容（保持位置）
         root_instance.update_idletasks()
         root_instance.update()
         adjust_window_size(root_instance)
@@ -1625,13 +1846,15 @@ def load_data_from_file(file_name, table_instance, root_instance):
 
 def on_load_data_click():
     """读取数据文件"""
-    global table, plot_button, root
+    global table, plot_button, root, _ui_components
     
     file_name = filedialog.askopenfilename(filetypes=[("Text Files", "*.txt"), ("All Files", "*.*")])
     if file_name:
         success, new_table = load_data_from_file(file_name, table, root)
         if success:
             table = new_table
+            # 更新_ui_components中的table引用
+            _ui_components['table'] = new_table
             # 调整窗口大小以适应新内容
             adjust_window_size(root)
             messagebox.showinfo(t('file_saved_success'), t('file_load_success', num=table.num_entries))
@@ -1711,7 +1934,7 @@ def on_clear_data_click():
 
 def on_new_file_click():
     """新建文件"""
-    global table, root
+    global table, root, _ui_components
     # 确认操作
     if table.is_modified:
         if not messagebox.askyesno(t('confirm'), t('confirm_new_file')):
@@ -1720,6 +1943,8 @@ def on_new_file_click():
     # 创建简单的对话框选择交叉口类型
     dialog = tk.Toplevel(root)
     dialog.title(t('select_intersection_type'))
+    # 设置窗口图标
+    set_window_icon(dialog)
     dialog.resizable(False, False)
     dialog.transient(root)  # 设置为父窗口的临时窗口
     dialog.grab_set()  # 模态对话框
@@ -1872,6 +2097,9 @@ def on_new_file_click():
         config = load_config()
         traffic_rule = config.get('traffic_rule', 'right')
         table = Table(root, num_entries=num_entries, traffic_rule=traffic_rule)
+        # 更新_ui_components中的table引用
+        global _ui_components
+        _ui_components['table'] = table
         if button_frame:
             table.pack(before=button_frame)
         else:
@@ -1879,7 +2107,7 @@ def on_new_file_click():
         # 重新绑定按钮
         if 'plot_button' in globals():
             plot_button.config(command=lambda: plot_traffic_flow(table))
-        # 调整窗口大小
+        # 调整窗口大小（保持位置，减少抖动）
         root.update_idletasks()
         root.update()
         adjust_window_size(root)
@@ -1899,6 +2127,8 @@ def on_new_file_click():
                 widget.insert(0, str(int(default_angle)) if default_angle == int(default_angle) else str(default_angle))
     table.file_name = None
     table.is_modified = False
+    # 确保_ui_components中的table引用是最新的
+    _ui_components['table'] = table
     update_window_title()
     messagebox.showinfo(t('file_saved_success'), t('new_table_created', num=num_entries))
 
@@ -1919,6 +2149,8 @@ def check_for_updates(parent=None):
     # 创建更新源选择对话框
     source_dialog = tk.Toplevel(root_window if root_window else tk._default_root)
     source_dialog.title(t('update_source_select'))
+    # 设置窗口图标
+    set_window_icon(source_dialog)
     source_dialog.resizable(False, False)
     if root_window:
         source_dialog.transient(root_window)
@@ -2001,6 +2233,8 @@ def show_update_dialog(parent, source='gitee'):
     # 创建更新对话框
     update_dialog = tk.Toplevel(parent if parent else tk._default_root)
     update_dialog.title(t('update_checking'))
+    # 设置窗口图标
+    set_window_icon(update_dialog)
     # 允许调整大小，以便显示长错误信息
     update_dialog.resizable(True, True)
     # 设置最小宽度，确保能容纳长文本
@@ -2464,6 +2698,8 @@ def download_update(dialog, status_label, info_label, progress_bar, progress_var
                                 # 创建重启提示弹窗
                                 restart_dialog = tk.Toplevel()
                                 restart_dialog.title(t('update_prepared'))
+                                # 设置窗口图标
+                                set_window_icon(restart_dialog)
                                 restart_dialog.resizable(False, False)
                                 
                                 # 设置窗口图标（如果有）
@@ -2582,6 +2818,105 @@ def download_update(dialog, status_label, info_label, progress_bar, progress_var
     thread.start()
 
 
+def show_donate_qrcode(parent=None):
+    """显示捐献二维码窗口"""
+    # 创建新窗口
+    donate_window = tk.Toplevel(parent if parent else root)
+    donate_window.title(t('donate_title'))
+    # 设置窗口图标
+    set_window_icon(donate_window)
+    donate_window.resizable(False, False)
+    if parent:
+        donate_window.transient(parent)
+        donate_window.grab_set()
+    
+    # 获取二维码图片路径
+    if getattr(sys, 'frozen', False):
+        base_path = sys._MEIPASS
+    else:
+        base_path = os.path.dirname(os.path.abspath(__file__))
+    
+    qrcode_path = os.path.join(base_path, 'qrcode.jpg')
+    
+    # 主容器
+    main_frame = tk.Frame(donate_window, bg='white', padx=30, pady=20)
+    main_frame.pack()
+    
+    # 左侧：二维码图片区域
+    left_frame = tk.Frame(main_frame, bg='white')
+    left_frame.pack(side=tk.LEFT, padx=(0, 20))
+    
+    # 获取字体族
+    global GUI_FONT_FAMILY
+    font_family = GUI_FONT_FAMILY if GUI_FONT_FAMILY else 'Microsoft YaHei UI'
+    
+    # 存储图片引用，避免被垃圾回收
+    image_refs = []
+    
+    # 加载并显示二维码
+    try:
+        if os.path.exists(qrcode_path):
+            # 尝试使用PIL加载JPG图片
+            try:
+                from PIL import Image, ImageTk
+                pil_image = Image.open(qrcode_path)
+                # 需要在正确的Tkinter窗口上下文中创建PhotoImage
+                qr_image = ImageTk.PhotoImage(pil_image, master=donate_window)
+                image_refs.append(qr_image)  # 保持引用
+                qr_label = tk.Label(left_frame, image=qr_image, bg='white')
+                qr_label.image = qr_image  # 保持引用
+                qr_label.pack()
+            except ImportError:
+                # 如果没有PIL，尝试使用PhotoImage（仅支持GIF/PNG）
+                from tkinter import PhotoImage
+                qr_image = PhotoImage(file=qrcode_path, master=donate_window)
+                image_refs.append(qr_image)  # 保持引用
+                qr_label = tk.Label(left_frame, image=qr_image, bg='white')
+                qr_label.image = qr_image  # 保持引用
+                qr_label.pack()
+        else:
+            error_label = tk.Label(left_frame, 
+                                 text='二维码图片未找到\nQR code image not found',
+                                 font=(font_family, 10),
+                                 bg='white', fg='red')
+            error_label.pack()
+    except Exception as e:
+        error_label = tk.Label(left_frame,
+                             text=f'加载图片失败\nFailed to load image: {e}',
+                             font=(font_family, 10),
+                             bg='white', fg='red')
+        error_label.pack()
+    
+    # 右侧：说明文字
+    right_frame = tk.Frame(main_frame, bg='white', width=300)
+    right_frame.pack(side=tk.LEFT, fill='both', expand=True)
+    
+    message_label = tk.Label(right_frame,
+                            text=t('donate_message'),
+                            font=(font_family, 11),
+                            bg='white', fg='#333333',
+                            justify='left',
+                            wraplength=280)
+    message_label.pack(anchor='nw', pady=(0, 20))
+    
+    # 关闭按钮
+    close_text = '关闭' if CURRENT_LANGUAGE == 'zh_CN' else 'Close'
+    close_button = ttk.Button(right_frame,
+                             text=close_text,
+                             command=donate_window.destroy,
+                             width=15)
+    close_button.pack(anchor='sw')
+    
+    # 居中显示
+    donate_window.update_idletasks()
+    width = donate_window.winfo_width()
+    height = donate_window.winfo_height()
+    x = (donate_window.winfo_screenwidth() // 2) - (width // 2)
+    y = (donate_window.winfo_screenheight() // 2) - (height // 2)
+    donate_window.geometry(f'{width}x{height}+{x}+{y}')
+    
+    donate_window.focus_set()
+
 def show_about(parent=None):
     """显示关于对话框，包含可点击的GitHub链接"""
     import webbrowser
@@ -2627,6 +2962,8 @@ def show_about(parent=None):
     # 创建自定义对话框
     about_dialog = tk.Toplevel(root_window)
     about_dialog.title(t('about'))
+    # 设置窗口图标
+    set_window_icon(about_dialog)
     about_dialog.resizable(False, False)
     about_dialog.transient(root_window)
     about_dialog.grab_set()
@@ -2781,6 +3118,15 @@ def show_about(parent=None):
                                         command=lambda: check_for_updates(root_window),
                                         width=button_width)
         check_update_button.pack(side=tk.LEFT, padx=(0, 10))
+    
+    # 捐献按钮
+    donate_text = t('btn_donate')
+    donate_button_width = 15 if CURRENT_LANGUAGE == 'zh_CN' else 15
+    donate_button = ttk.Button(button_frame,
+                              text=donate_text,
+                              command=lambda: show_donate_qrcode(root_window),
+                              width=donate_button_width)
+    donate_button.pack(side=tk.LEFT, padx=(0, 10))
     
     # 关闭按钮
     close_text = '关闭' if CURRENT_LANGUAGE == 'zh_CN' else 'Close'
@@ -3965,12 +4311,15 @@ def plot_traffic_flow(table_instance):
         # 先设置一个临时位置（屏幕外），避免在左上角闪现
         plot_window.geometry("1x1+-10000+-10000")
         
+        # 设置窗口图标
+        set_window_icon(plot_window)
+        
         if table_instance.file_name:
             # 去掉文件扩展名显示
             file_name = os.path.basename(table_instance.file_name)
             plot_title = os.path.splitext(file_name)[0]
         else:
-            plot_title = "交叉口交通流量流向可视化图"
+            plot_title = t('plot_title')
         plot_window.title(plot_title)
         
         # 将matplotlib图形嵌入到tkinter窗口
@@ -4073,6 +4422,7 @@ def plot_traffic_flow(table_instance):
 root = tk.Tk()
 root.title(t('app_title'))
 root.withdraw()  # 先隐藏窗口
+# 注意：在隐藏状态下设置图标可能不生效，会在窗口显示后再次设置
 # 先设置一个临时位置（屏幕外），避免在左上角闪现
 root.geometry("1x1+-10000+-10000")
 
@@ -4159,6 +4509,8 @@ if choice == 'load_file' and initial_file:
     success, new_table = load_data_from_file(initial_file, table, root)
     if success:
         table = new_table
+        # 更新_ui_components中的table引用
+        _ui_components['table'] = new_table
 
 # 创建菜单栏
 menubar = tk.Menu(root)
@@ -4217,6 +4569,14 @@ root.update()  # 再次更新以确保尺寸计算准确
 
 # 调整窗口大小以适应内容并居中
 adjust_window_size(root)
+
+# 在窗口显示后立即设置图标（确保图标显示）
+# 先立即设置一次
+set_window_icon(root)
+root.update_idletasks()
+# 再延迟设置一次，确保图标正确显示
+root.after(50, lambda: set_window_icon(root))
+root.after(200, lambda: set_window_icon(root))  # 双重保险，确保图标设置成功
 
 # 添加主窗口关闭事件处理，确保程序完全退出
 def on_main_window_close():

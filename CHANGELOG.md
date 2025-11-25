@@ -12,7 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [2.3.0] - 2025-01-XX
+## [2.3.0] - 2025-11-25
 
 **🎉 New Features / 新功能**
 
@@ -28,6 +28,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - 版本信息显示：在"关于"对话框中显示当前程序版本号
 - Update download and installation: Can directly download and install updates when new version is found
   - 更新下载和安装：发现新版本后可以直接下载并安装更新
+- Application icon: Added Sparrow.png as application icon for all windows
+  - 应用图标：为所有窗口添加 Sparrow.png 作为应用图标
+- Flow input order notice: Added detailed notice about turning flow input order
+  - 转向流量输入顺序提示：添加了详细的转向流量输入顺序说明
+
+### Improved / 改进
+
+- Icon loading optimization: Implemented caching mechanism to avoid repeated loading of large icon files
+  - 图标加载优化：实现缓存机制，避免重复加载大图标文件
+- Icon auto-scaling: Large icons are automatically scaled to 64x64 for better performance
+  - 图标自动缩放：大图标自动缩放到64x64，提升性能
+- Language switching: Enhanced error handling and UI update reliability
+  - 语言切换：增强错误处理和UI更新可靠性
+- Table header alignment: Fixed alignment issue between table headers and data cells
+  - 表头对齐：修复表头与数据框的对齐问题
 
 ### Usage / 使用说明
 
