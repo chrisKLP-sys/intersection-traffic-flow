@@ -4,7 +4,7 @@
 
 ---
 
-**Latest Release / 最新版本: [v2.3.0](https://github.com/chrisKLP-sys/intersection-traffic-flow/releases/tag/v2.3.0)** 🎉
+**Latest Release / 最新版本: [v2.3](https://github.com/chrisKLP-sys/intersection-traffic-flow/releases/tag/v2.3)** 🎉
 
 <a name="english"></a>
 ## English

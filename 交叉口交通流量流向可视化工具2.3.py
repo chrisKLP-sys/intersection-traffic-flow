@@ -32,6 +32,24 @@ try:
 except ImportError:
     UPDATE_CHECKER_AVAILABLE = False
 
+# 程序启动时检查待安装的更新
+if UPDATE_CHECKER_AVAILABLE:
+    try:
+        has_pending, new_file_path, current_exe_path, version, language = update_checker.check_pending_update()
+        if has_pending:
+            # 执行待安装的更新
+            success, error = update_checker.execute_pending_update()
+            if success:
+                # 安装成功，程序会启动新版本，当前程序退出
+                import os
+                os._exit(0)
+            else:
+                # 安装失败，继续运行当前程序
+                print(f"自动安装更新失败: {error}")
+    except Exception as e:
+        # 检查更新时出错，继续运行当前程序
+        print(f"检查待安装更新时出错: {e}")
+
 plt.ioff()
 
 # ==================== 多语言支持 ====================
@@ -134,6 +152,7 @@ LANGUAGES = {
         # 更新相关
         'btn_check_update': '检查更新',
         'update_checking': '正在检查更新...',
+        'update_downloading_title': '正在下载更新',
         'update_checking_github': '正在从GitHub检查更新...',
         'update_checking_gitee': '正在从Gitee检查更新...',
         'update_available': '发现新版本',
@@ -151,6 +170,15 @@ LANGUAGES = {
         'update_install_failed_msg': '安装更新时出错：{error}',
         'update_error': '更新检查失败',
         'update_error_msg': '检查更新时出错：{error}',
+        'update_network_error': '网络连接失败',
+        'update_network_error_msg': '请检查网络连接或VPN设置，或者稍后再试',
+        'update_prepared': '更新已准备',
+        'update_prepared_msg': '下载已完成，重启软件后生效',
+        'update_restart_now': '立即重启软件',
+        'update_installing': '正在安装更新...',
+        'update_installing_msg': '检测到待安装的更新，正在安装...',
+        'update_install_restart_failed': '安装失败',
+        'update_install_restart_failed_msg': '安装更新时出错：{error}',
         'update_no_download': '未找到下载链接',
         'update_no_download_msg': '未找到可用的下载链接。',
         'update_source_select': '选择更新源',
@@ -162,10 +190,16 @@ LANGUAGES = {
         'update_source_github_button': '从GitHub更新',
         'update_cancel': '取消',
         'update_download': '下载',
+        'update_download_and_install': '直接更新',
+        'update_save_as': '新版本另存为',
         'update_skip': '跳过',
         'update_retry': '重试',
         'update_close': '关闭',
         'update_release_notes': '更新说明：',
+        'update_save_success': '保存成功',
+        'update_save_success_msg': '新版本已保存到：{path}',
+        'update_save_failed': '保存失败',
+        'update_save_failed_msg': '保存新版本失败：{error}',
     },
     'en_US': {
         # Window titles
@@ -264,6 +298,7 @@ LANGUAGES = {
         # Update related
         'btn_check_update': 'Check for Updates',
         'update_checking': 'Checking for updates...',
+        'update_downloading_title': 'Downloading Update',
         'update_checking_github': 'Checking for updates from GitHub...',
         'update_checking_gitee': 'Checking for updates from Gitee...',
         'update_available': 'Update Available',
@@ -281,6 +316,15 @@ LANGUAGES = {
         'update_install_failed_msg': 'Error installing update: {error}',
         'update_error': 'Update check failed',
         'update_error_msg': 'Error checking for updates: {error}',
+        'update_network_error': 'Network connection failed',
+        'update_network_error_msg': 'Please check your network connection or VPN settings, or try again later',
+        'update_prepared': 'Update prepared',
+        'update_prepared_msg': 'Download completed, will take effect after restarting the software',
+        'update_restart_now': 'Restart software now',
+        'update_installing': 'Installing update...',
+        'update_installing_msg': 'Pending update detected, installing...',
+        'update_install_restart_failed': 'Installation failed',
+        'update_install_restart_failed_msg': 'Error installing update: {error}',
         'update_no_download': 'No download link found',
         'update_no_download_msg': 'No available download link found.',
         'update_source_select': 'Select Update Source',
@@ -292,10 +336,16 @@ LANGUAGES = {
         'update_source_github_button': 'Update from GitHub',
         'update_cancel': 'Cancel',
         'update_download': 'Download',
+        'update_download_and_install': 'Update Now',
+        'update_save_as': 'Save As',
         'update_skip': 'Skip',
         'update_retry': 'Retry',
         'update_close': 'Close',
         'update_release_notes': 'Release Notes:',
+        'update_save_success': 'Save Success',
+        'update_save_success_msg': 'New version saved to: {path}',
+        'update_save_failed': 'Save Failed',
+        'update_save_failed_msg': 'Failed to save new version: {error}',
     }
 }
 
@@ -1972,10 +2022,11 @@ def show_update_dialog(parent, source='gitee'):
                            bg='white', fg='#333333')
     status_label.pack(pady=(0, 15))
     
-    # 进度条
+    # 进度条 - 检查更新阶段使用确定模式
     progress_var = tk.DoubleVar()
-    progress_bar = ttk.Progressbar(main_frame, variable=progress_var, maximum=100, length=400)
+    progress_bar = ttk.Progressbar(main_frame, variable=progress_var, maximum=100, length=400, mode='determinate')
     progress_bar.pack(pady=(0, 15))
+    progress_var.set(0)  # 初始化为0
     
     # 详细信息标签 - 增加wraplength以容纳长错误信息
     # 中英文错误信息可能较长，设置wraplength为500像素
@@ -1985,7 +2036,7 @@ def show_update_dialog(parent, source='gitee'):
     
     # 按钮框架
     button_frame = tk.Frame(main_frame, bg='white')
-    button_frame.pack()
+    button_frame.pack(pady=10)
     
     close_button = ttk.Button(button_frame, text=t('update_close'), 
                              command=update_dialog.destroy, width=12)
@@ -1993,6 +2044,7 @@ def show_update_dialog(parent, source='gitee'):
     
     download_button = None
     skip_button = None
+    save_as_button = None
     
     # 居中显示，设置初始大小
     update_dialog.update_idletasks()
@@ -2010,10 +2062,29 @@ def show_update_dialog(parent, source='gitee'):
         if update_source not in ['github', 'gitee']:
             update_source = 'gitee'
         
+        # 模拟检查进度（0-90%）
+        def update_check_progress(percent):
+            def update():
+                try:
+                    progress_var.set(percent)
+                    progress_bar['value'] = percent  # 直接设置值
+                    progress_bar.update_idletasks()
+                    update_dialog.update_idletasks()
+                    update_dialog.update()  # 强制刷新
+                except:
+                    pass
+            update_dialog.after(0, update)
+        
         try:
+            # 开始检查，进度到30%
+            update_check_progress(30)
+            
             current_version = update_checker.get_current_version()
             if not current_version:
                 current_version = "2.3.0"  # 默认版本
+            
+            # 进度到60%
+            update_check_progress(60)
             
             # check_update 返回 7 个值: (success, version, download_url, release_notes, error_message, tag_name, filename)
             result = update_checker.check_update(update_source)
@@ -2025,18 +2096,57 @@ def show_update_dialog(parent, source='gitee'):
                 tag_name = None
                 filename = None
             
+            # 进度到90%
+            update_check_progress(90)
+            
             # 更新UI（需要在主线程中执行）
             def update_ui():
+                # 检查是否是网络连接错误
+                is_network_error = False
+                if error:
+                    error_lower = str(error).lower()
+                    network_keywords = ['timeout', 'connection', '网络', '连接', 'unreachable', 'dns', 'refused']
+                    is_network_error = any(keyword in error_lower for keyword in network_keywords)
+                
                 if not success:
-                    status_label.config(text=t('update_error'), fg='#cc0000')
-                    info_label.config(text=t('update_error_msg', error=error or 'Unknown error'))
-                    progress_bar.stop()
+                    if is_network_error:
+                        # 网络连接错误：进度条到80%，弹出错误对话框
+                        progress_var.set(80)
+                        progress_bar['value'] = 80  # 直接设置值
+                        progress_bar.update_idletasks()
+                        update_dialog.update_idletasks()
+                        update_dialog.update()
+                        
+                        # 弹出错误对话框
+                        from tkinter import messagebox
+                        messagebox.showerror(
+                            t('update_network_error'),
+                            t('update_network_error_msg'),
+                            parent=update_dialog
+                        )
+                        
+                        status_label.config(text=t('update_network_error'), fg='#cc0000')
+                        info_label.config(text=t('update_network_error_msg'))
+                    else:
+                        # 其他错误：进度条到100%，显示错误信息
+                        progress_var.set(100)
+                        progress_bar['value'] = 100  # 直接设置值
+                        progress_bar.update_idletasks()
+                        update_dialog.update_idletasks()
+                        update_dialog.update()
+                        status_label.config(text=t('update_error'), fg='#cc0000')
+                        info_label.config(text=t('update_error_msg', error=error or 'Unknown error'))
                     return
+                
+                # 检查完成，进度条到100%
+                progress_var.set(100)
+                progress_bar.update_idletasks()
+                update_dialog.update_idletasks()
+                update_dialog.update()
                 
                 if not download_url:
                     status_label.config(text=t('update_no_download'), fg='#cc0000')
                     info_label.config(text=t('update_no_download_msg'))
-                    progress_bar.stop()
                     return
                 
                 # 比较版本
@@ -2049,94 +2159,276 @@ def show_update_dialog(parent, source='gitee'):
                     if release_notes:
                         info_text += f"\n\n{t('update_release_notes')}\n{release_notes[:200]}"
                     info_label.config(text=info_text)
-                    progress_bar.stop()
+                    # 保持100%显示，等待用户选择
                     
-                    # 添加下载和跳过按钮
-                    def on_download():
+                    # 添加下载选项按钮
+                    def on_download_and_install():
+                        # 隐藏按钮
+                        if download_button:
+                            download_button.pack_forget()
+                        if save_as_button:
+                            save_as_button.pack_forget()
+                        if skip_button:
+                            skip_button.pack_forget()
+                        update_dialog.update_idletasks()
+                        
+                        # 重置进度条，从0开始下载
+                        progress_var.set(0)
+                        progress_bar.update_idletasks()
                         download_update(update_dialog, status_label, info_label, progress_bar, progress_var,
-                                      download_url, version)
+                                      download_url, version, auto_install=True,
+                                      buttons=(download_button, save_as_button, skip_button))
+                    
+                    def on_save_as():
+                        # 隐藏按钮
+                        if download_button:
+                            download_button.pack_forget()
+                        if save_as_button:
+                            save_as_button.pack_forget()
+                        if skip_button:
+                            skip_button.pack_forget()
+                        update_dialog.update_idletasks()
+                        
+                        # 重置进度条，从0开始下载
+                        progress_var.set(0)
+                        progress_bar.update_idletasks()
+                        download_update(update_dialog, status_label, info_label, progress_bar, progress_var,
+                                      download_url, version, auto_install=False,
+                                      buttons=(download_button, save_as_button, skip_button))
                     
                     def on_skip():
                         update_dialog.destroy()
                     
-                    nonlocal download_button, skip_button
-                    download_button = ttk.Button(button_frame, text=t('update_download'), 
-                                                command=on_download, width=12)
-                    download_button.pack(side=tk.LEFT, padx=5)
+                    nonlocal download_button, skip_button, close_button, save_as_button
+                    
+                    # 隐藏或销毁关闭按钮
+                    try:
+                        close_button.pack_forget()
+                        close_button.destroy()
+                        close_button = None
+                    except:
+                        pass
+                    
+                    # 如果按钮已存在，先销毁
+                    try:
+                        if download_button:
+                            download_button.destroy()
+                        if skip_button:
+                            skip_button.destroy()
+                        if save_as_button:
+                            save_as_button.destroy()
+                    except:
+                        pass
+                    
+                    # 确保按钮框架可见
+                    button_frame.pack(pady=15)
+                    
+                    # 创建新按钮：直接更新、另存为、跳过
+                    download_button = ttk.Button(button_frame, text=t('update_download_and_install'), 
+                                                command=on_download_and_install, width=15)
+                    download_button.pack(side=tk.LEFT, padx=5, pady=5)
+                    
+                    save_as_button = ttk.Button(button_frame, text=t('update_save_as'), 
+                                                command=on_save_as, width=15)
+                    save_as_button.pack(side=tk.LEFT, padx=5, pady=5)
+                    
                     skip_button = ttk.Button(button_frame, text=t('update_skip'), 
-                                            command=on_skip, width=12)
-                    skip_button.pack(side=tk.LEFT, padx=5)
+                                            command=on_skip, width=15)
+                    skip_button.pack(side=tk.LEFT, padx=5, pady=5)
+                    
+                    
+                    # 强制更新对话框布局并显示
+                    button_frame.update_idletasks()
+                    main_frame.update_idletasks()
+                    update_dialog.update_idletasks()
+                    
+                    # 调整对话框大小以适应新内容
+                    update_dialog.update()
+                    new_height = max(update_dialog.winfo_reqheight(), 350)
+                    # 重新计算居中位置
+                    screen_width = update_dialog.winfo_screenwidth()
+                    screen_height = update_dialog.winfo_screenheight()
+                    new_x = (screen_width // 2) - (initial_width // 2)
+                    new_y = (screen_height // 2) - (new_height // 2)
+                    update_dialog.geometry(f'{initial_width}x{new_height}+{new_x}+{new_y}')
+                    update_dialog.update()
+                    
+                    # 再次强制刷新
+                    update_dialog.update_idletasks()
+                    update_dialog.update()
                 else:
                     # 已是最新版本
                     status_label.config(text=t('update_latest'), fg='#00aa00')
                     info_label.config(text=t('update_latest_msg', version=current_version))
-                    progress_bar.stop()
+                    # 保持100%显示
             
             update_dialog.after(0, update_ui)
             
         except Exception as e:
             # 捕获异常信息到局部变量，避免闭包问题
             error_msg = str(e)
+            error_lower = str(error_msg).lower()
+            network_keywords = ['timeout', 'connection', '网络', '连接', 'unreachable', 'dns', 'refused']
+            is_network_error = any(keyword in error_lower for keyword in network_keywords)
+            
             def show_error():
-                status_label.config(text=t('update_error'), fg='#cc0000')
-                info_label.config(text=t('update_error_msg', error=error_msg))
-                progress_bar.stop()
+                if is_network_error:
+                    # 网络连接错误：进度条到80%，弹出错误对话框
+                    progress_var.set(80)
+                    progress_bar['value'] = 80  # 直接设置值
+                    progress_bar.update_idletasks()
+                    update_dialog.update_idletasks()
+                    update_dialog.update()
+                    
+                    # 弹出错误对话框
+                    from tkinter import messagebox
+                    messagebox.showerror(
+                        t('update_network_error'),
+                        t('update_network_error_msg'),
+                        parent=update_dialog
+                    )
+                    
+                    status_label.config(text=t('update_network_error'), fg='#cc0000')
+                    info_label.config(text=t('update_network_error_msg'))
+                else:
+                    # 其他错误：进度条到100%，显示错误信息
+                    progress_var.set(100)
+                    progress_bar.update_idletasks()
+                    status_label.config(text=t('update_error'), fg='#cc0000')
+                    info_label.config(text=t('update_error_msg', error=error_msg))
             update_dialog.after(0, show_error)
-    
-    # 启动进度条动画
-    progress_bar.start(10)
     
     # 启动检查线程
     thread = threading.Thread(target=check_update_thread, daemon=True)
     thread.start()
 
 
-def download_update(dialog, status_label, info_label, progress_bar, progress_var, download_url, version):
+def download_update(dialog, status_label, info_label, progress_bar, progress_var, download_url, version, auto_install=True, buttons=None):
     """
     下载更新
+    auto_install: True=下载后自动安装, False=下载后另存为
+    buttons: (download_button, save_as_button, skip_button) 按钮引用，用于在下载完成后重新显示
     """
     if not UPDATE_CHECKER_AVAILABLE:
         return
     
-    # 更新状态
+    # 更新窗口标题和状态
+    dialog.title(t('update_downloading_title'))
     status_label.config(text=t('update_downloading'), fg='#0066cc')
     info_label.config(text='')
-    progress_bar.config(mode='determinate')
+    
+    # 停止不确定模式动画，切换到确定模式
+    progress_bar.stop()
+    progress_bar.config(mode='determinate', maximum=100)
     progress_var.set(0)
+    progress_bar.update_idletasks()
     
-    # 创建临时文件
-    temp_dir = tempfile.gettempdir()
-    temp_file = os.path.join(temp_dir, f'update_{version}.exe')
+    # 如果是另存为，先让用户选择保存位置
+    if not auto_install:
+        from tkinter import filedialog
+        # 获取当前可执行文件的目录
+        if getattr(sys, 'frozen', False):
+            default_dir = os.path.dirname(sys.executable)
+        else:
+            default_dir = os.path.dirname(os.path.abspath(__file__))
+        
+        # 建议的文件名（根据当前语言）
+        if CURRENT_LANGUAGE == 'zh_CN':
+            suggested_filename = f'交叉口交通流量流向可视化工具{version}.exe'
+        else:
+            suggested_filename = f'IntersectionTrafficFlowVisualize{version}.exe'
+        
+        # 打开文件保存对话框
+        filetypes_text = [('Executable files', '*.exe'), ('All files', '*.*')] if CURRENT_LANGUAGE != 'zh_CN' else [('可执行文件', '*.exe'), ('所有文件', '*.*')]
+        save_path = filedialog.asksaveasfilename(
+            parent=dialog,
+            title=t('update_save_as'),
+            initialdir=default_dir,
+            initialfile=suggested_filename,
+            defaultextension='.exe',
+            filetypes=filetypes_text
+        )
+        
+        if not save_path:
+            # 用户取消了保存
+            status_label.config(text=t('update_cancel'), fg='#666666')
+            info_label.config(text='')
+            progress_bar.stop()
+            return
+        
+        temp_file = save_path
+    else:
+        # 创建临时文件
+        temp_dir = tempfile.gettempdir()
+        temp_file = os.path.join(temp_dir, f'update_{version}.exe')
     
-    # 下载进度回调
+    # 下载进度回调（在后台线程中调用，需要通过after在主线程中更新UI）
     downloaded_bytes = [0]
     total_bytes = [0]
+    
+    # 限制更新频率，避免过于频繁的UI更新（每100KB更新一次）
+    last_update_size = [0]
+    UPDATE_INTERVAL = 100 * 1024  # 100KB
     
     def progress_callback(downloaded, total):
         downloaded_bytes[0] = downloaded
         total_bytes[0] = total
-        if total > 0:
-            percent = (downloaded / total) * 100
-            progress_var.set(percent)
-            # 格式化大小
-            def format_size(size):
-                if size < 1024:
-                    return f"{size}B"
-                elif size < 1024 * 1024:
-                    return f"{size/1024:.1f}KB"
+        
+        # 限制更新频率
+        if downloaded - last_update_size[0] < UPDATE_INTERVAL and downloaded < total:
+            return
+        
+        last_update_size[0] = downloaded
+        
+        # 格式化大小
+        def format_size(size):
+            if size < 1024:
+                return f"{size}B"
+            elif size < 1024 * 1024:
+                return f"{size/1024:.1f}KB"
+            else:
+                return f"{size/(1024*1024):.1f}MB"
+        
+        # 在主线程中更新UI
+        def update_progress():
+            try:
+                if total > 0:
+                    # 有总大小，显示百分比
+                    percent = (downloaded / total) * 100
+                    progress_var.set(percent)
+                    # 同时直接设置进度条值，确保更新
+                    progress_bar['value'] = percent
+                    info_text = t('update_download_progress', 
+                                 percent=f"{percent:.1f}",
+                                 downloaded=format_size(downloaded),
+                                 total=format_size(total))
                 else:
-                    return f"{size/(1024*1024):.1f}MB"
-            
-            info_text = t('update_download_progress', 
-                         percent=f"{percent:.1f}",
-                         downloaded=format_size(downloaded),
-                         total=format_size(total))
-            info_label.config(text=info_text)
-        dialog.update()
+                    # 没有总大小，显示不确定模式或已下载大小
+                    # 使用一个估算的进度（基于已下载的大小）
+                    # 假设文件大约在10-50MB之间，根据已下载大小估算
+                    estimated_total = max(downloaded * 2, 10 * 1024 * 1024)  # 至少10MB
+                    percent = min((downloaded / estimated_total) * 100, 95)  # 最多显示95%
+                    progress_var.set(percent)
+                    progress_bar['value'] = percent
+                    info_text = f"已下载: {format_size(downloaded)}"
+                
+                info_label.config(text=info_text)
+                # 强制更新进度条显示
+                progress_bar.update_idletasks()
+                dialog.update_idletasks()
+                dialog.update()  # 强制刷新对话框
+                
+            except Exception as e:
+                pass
+        
+        # 使用 after_idle 确保在主线程空闲时立即执行
+        dialog.after_idle(update_progress)
     
     # 在后台线程中下载
     def download_thread():
         try:
+            # 重置更新计数器
+            last_update_size[0] = 0
             success, error = update_checker.download_file(download_url, temp_file, progress_callback)
             
             def update_ui():
@@ -2144,24 +2436,137 @@ def download_update(dialog, status_label, info_label, progress_bar, progress_var
                     status_label.config(text=t('update_download_failed'), fg='#cc0000')
                     info_label.config(text=t('update_download_failed_msg', error=error))
                     progress_bar.stop()
+                    progress_var.set(0)  # 重置进度条
+                    # 按钮保持隐藏，不再显示
                     return
                 
-                # 下载成功，安装更新
-                status_label.config(text=t('update_install_success'), fg='#00aa00')
-                info_label.config(text=t('update_install_success_msg'))
-                progress_bar.stop()
+                # 下载成功，确保进度条显示100%
+                progress_var.set(100)
+                progress_bar.update_idletasks()
+                dialog.update_idletasks()
+                dialog.update()  # 强制刷新对话框
                 
-                # 安装更新
-                current_exe = sys.executable
-                install_success, install_error = update_checker.install_update(temp_file, current_exe)
-                
-                if install_success:
-                    # 安装成功，关闭程序
-                    dialog.after(1000, lambda: os._exit(0))
+                if auto_install:
+                    # 下载成功，准备更新
+                    # 在后台线程中准备更新文件
+                    def prepare_thread():
+                        current_exe = sys.executable
+                        # version 参数已经在 download_update 函数的作用域中
+                        prepare_success, prepare_error = update_checker.prepare_update_for_restart(
+                            temp_file, current_exe, version, CURRENT_LANGUAGE
+                        )
+                        
+                        def prepare_result():
+                            if prepare_success:
+                                # 准备成功，显示重启提示弹窗
+                                dialog.destroy()  # 先关闭更新对话框
+                                
+                                # 创建重启提示弹窗
+                                restart_dialog = tk.Toplevel()
+                                restart_dialog.title(t('update_prepared'))
+                                restart_dialog.resizable(False, False)
+                                
+                                # 设置窗口图标（如果有）
+                                try:
+                                    restart_dialog.iconbitmap(default='')
+                                except:
+                                    pass
+                                
+                                # 居中显示
+                                restart_dialog.update_idletasks()
+                                width = 400
+                                height = 150
+                                x = (restart_dialog.winfo_screenwidth() // 2) - (width // 2)
+                                y = (restart_dialog.winfo_screenheight() // 2) - (height // 2)
+                                restart_dialog.geometry(f'{width}x{height}+{x}+{y}')
+                                
+                                # 主框架
+                                main_frame = tk.Frame(restart_dialog, bg='white')
+                                main_frame.pack(fill=tk.BOTH, expand=True, padx=20, pady=20)
+                                
+                                # 消息标签
+                                # 获取字体（尝试从主窗口获取，如果没有则使用默认值）
+                                try:
+                                    main_font = tk.font.nametofont('TkDefaultFont')
+                                    msg_font = (main_font.actual()['family'], 10)
+                                except:
+                                    msg_font = ('Microsoft YaHei', 10)
+                                
+                                msg_label = tk.Label(
+                                    main_frame, 
+                                    text=t('update_prepared_msg'),
+                                    font=msg_font,
+                                    bg='white',
+                                    fg='#333333',
+                                    wraplength=350,
+                                    justify='left'
+                                )
+                                msg_label.pack(pady=(0, 20))
+                                
+                                # 按钮框架
+                                button_frame = tk.Frame(main_frame, bg='white')
+                                button_frame.pack()
+                                
+                                def on_restart():
+                                    # 执行重启
+                                    restart_success, restart_error = update_checker.restart_with_update()
+                                    if restart_success:
+                                        # 延迟一下，确保批处理脚本已经启动
+                                        restart_dialog.after(500, lambda: (
+                                            restart_dialog.destroy(),
+                                            os._exit(0)
+                                        ))
+                                    else:
+                                        # 重启失败，显示错误
+                                        from tkinter import messagebox
+                                        messagebox.showerror(
+                                            t('update_install_restart_failed'),
+                                            t('update_install_restart_failed_msg', error=restart_error),
+                                            parent=restart_dialog
+                                        )
+                                
+                                # 立即重启软件按钮
+                                restart_button = ttk.Button(
+                                    button_frame,
+                                    text=t('update_restart_now'),
+                                    command=on_restart,
+                                    width=20
+                                )
+                                restart_button.pack()
+                                
+                                # 关闭窗口时也执行重启
+                                def on_close():
+                                    on_restart()
+                                
+                                restart_dialog.protocol("WM_DELETE_WINDOW", on_close)
+                                
+                            else:
+                                # 准备失败
+                                status_label.config(text=t('update_install_failed'), fg='#cc0000')
+                                info_label.config(text=t('update_install_failed_msg', error=prepare_error))
+                                progress_bar.stop()
+                                progress_var.set(0)
+                        
+                        dialog.after(0, prepare_result)
+                    
+                    # 启动准备线程
+                    prepare_thread_obj = threading.Thread(target=prepare_thread, daemon=True)
+                    prepare_thread_obj.start()
                 else:
-                    # 安装失败
-                    status_label.config(text=t('update_install_failed'), fg='#cc0000')
-                    info_label.config(text=t('update_install_failed_msg', error=install_error))
+                    # 另存为模式：下载成功
+                    # 确保进度条显示100%
+                    progress_var.set(100)
+                    progress_bar.update_idletasks()
+                    dialog.update_idletasks()
+                    dialog.update()
+                    
+                    status_label.config(text=t('update_save_success'), fg='#00aa00')
+                    info_label.config(text=t('update_save_success_msg', path=temp_file))
+                    # 不要调用stop()，保持进度条显示100%
+                    # progress_bar.stop()  # 注释掉，保持显示100%
+                    
+                    # 2秒后自动关闭对话框
+                    dialog.after(2000, dialog.destroy)
             
             dialog.after(0, update_ui)
             
@@ -2170,6 +2575,7 @@ def download_update(dialog, status_label, info_label, progress_bar, progress_var
                 status_label.config(text=t('update_download_failed'), fg='#cc0000')
                 info_label.config(text=t('update_download_failed_msg', error=str(e)))
                 progress_bar.stop()
+                progress_var.set(0)  # 重置进度条
             dialog.after(0, show_error)
     
     thread = threading.Thread(target=download_thread, daemon=True)

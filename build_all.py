@@ -74,47 +74,14 @@ def check_dependencies():
     return True
 
 def clean_build_files():
-    """清理旧的构建文件"""
+    """清理旧的构建文件（不删除可执行文件）"""
     print_step(2, 5, "清理旧的构建文件...")
     
     dirs_to_remove = ['build', '__pycache__']
     removed_count = 0
     
-    # 尝试删除 dist 目录中的 exe 文件（如果存在且被占用）
-    if os.path.exists('dist') and os.path.isdir('dist'):
-        exe_files = []
-        try:
-            for file in os.listdir('dist'):
-                if file.endswith('.exe'):
-                    exe_path = os.path.join('dist', file)
-                    if os.path.isfile(exe_path):
-                        exe_files.append(exe_path)
-        except:
-            pass
-        
-        # 尝试删除 exe 文件
-        for exe_path in exe_files:
-            try:
-                # 尝试直接删除
-                os.remove(exe_path)
-                print(f"  ✓ 已删除: {os.path.basename(exe_path)}")
-                removed_count += 1
-            except PermissionError:
-                print(f"  ⚠ 无法删除 {os.path.basename(exe_path)}：文件正在运行或被占用")
-                print(f"     请先关闭程序（如果有正在运行的程序），然后手动删除 dist 目录")
-                print(f"     或者等待几秒后重新运行打包脚本（PyInstaller 会尝试覆盖）")
-            except Exception as e:
-                print(f"  ⚠ 无法删除 {os.path.basename(exe_path)}: {e}")
-        
-        # 尝试删除 dist 目录（如果为空）
-        if os.path.exists('dist'):
-            try:
-                if not os.listdir('dist'):
-                    os.rmdir('dist')
-                    print(f"  ✓ 已删除: dist/")
-                    removed_count += 1
-            except:
-                pass
+    # 不删除 dist 目录中的 exe 文件，保留旧版本
+    # PyInstaller 会自动覆盖同名文件，如果需要保留旧版本，请手动重命名
     
     # 删除其他目录
     for dir_name in dirs_to_remove:
@@ -348,8 +315,8 @@ def build_application():
         '--noconfirm',
         '--onefile',
         '--name', '交叉口交通流量流向可视化工具2.3',
-        main_file,
-        'update_checker.py'  # 添加更新检查模块
+        '--collect-all', 'pywin32',  # 收集所有pywin32相关文件（包括DLL）
+        main_file
     ]
     
     # 添加图标（可执行文件图标）
@@ -377,7 +344,13 @@ def build_application():
         # Windows 使用 windowed 模式
         cmd.append('--windowed')
     
-    # 添加数据文件（帮助文档和图标）
+    # 添加version_info.txt到数据文件（作为后备，用于读取版本号）
+    version_info_file = 'version_info.txt'
+    if os.path.exists(version_info_file):
+        datas.append((version_info_file, '.'))
+        print(f"  ✓ 添加版本信息文件: {version_info_file}")
+    
+    # 添加数据文件（帮助文档、图标和版本信息文件）
     for src, dst in datas:
         cmd.extend(['--add-data', f'{src}{os.pathsep}{dst}'])
     
@@ -413,6 +386,7 @@ def build_application():
         'PIL.Image',  # PIL的Image模块
         'PIL.PdfImagePlugin',  # PDF图像支持
         'PIL.PdfParser',  # PDF解析器
+        'update_checker',  # 更新检查模块（2.3版本新增）
     ]
     
     for imp in hidden_imports:
@@ -440,7 +414,7 @@ def build_application():
         return False
 
 def verify_build():
-    """验证打包结果"""
+    """验证打包结果（只检查文件名，不检查详细信息）"""
     print_step(4, 5, "验证打包结果...")
     
     system = platform.system()
@@ -450,14 +424,12 @@ def verify_build():
     else:
         exe_path = os.path.join('dist', '交叉口交通流量流向可视化工具2.3')
     
+    # 只检查文件是否存在（比对文件名），不检查文件大小等详细信息
     if os.path.exists(exe_path):
-        file_size = os.path.getsize(exe_path)
-        size_mb = file_size / (1024 * 1024)
-        print(f"  ✓ 可执行文件已生成: {exe_path}")
-        print(f"  ✓ 文件大小: {size_mb:.2f} MB")
+        print(f"  ✓ 可执行文件已生成: {os.path.basename(exe_path)}")
         return True, exe_path
     else:
-        print(f"  ❌ 未找到可执行文件: {exe_path}")
+        print(f"  ❌ 未找到可执行文件: {os.path.basename(exe_path)}")
         return False, None
 
 def run_tests():
