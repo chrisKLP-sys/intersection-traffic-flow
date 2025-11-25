@@ -355,7 +355,6 @@ def build_application():
         '--noconfirm',
         '--onefile',
         '--name', '交叉口交通流量流向可视化工具2.3.0',
-        '--collect-all', 'pywin32',  # 收集所有pywin32相关文件（包括DLL）
         main_file
     ]
     
@@ -420,8 +419,11 @@ def build_application():
         'tempfile',  # 用于临时文件
         'shutil',  # 用于文件操作
         'platform',  # 用于系统检测
+        # pywin32模块（可选，代码中有fallback，但包含它们可以提升功能）
         'win32api',  # 用于Windows版本信息（可选）
         'win32file',  # 用于Windows文件操作（可选）
+        'pywintypes',  # pywin32的基础类型模块
+        'win32con',  # Windows常量定义
         'PIL',  # Pillow，matplotlib需要
         'PIL.Image',  # PIL的Image模块
         'PIL.PdfImagePlugin',  # PDF图像支持
@@ -439,18 +441,142 @@ def build_application():
     
     print(f"  执行命令: {' '.join(cmd[:5])}... (共 {len(cmd)} 个参数)")
     print("  这可能需要几分钟时间，请耐心等待...\n")
+    print("  [开始打包，实时输出如下：]")
+    print("  " + "=" * 60)
+    print("  💡 提示：")
+    print("     - 'Hidden import not found' 警告是正常的（pywin32模块是可选的）")
+    print("     - 'Permission denied' 警告会自动重试，通常不是问题")
+    print("     - 打包过程可能需要几分钟，请耐心等待...")
+    print("  " + "=" * 60)
     
     try:
-        # 执行打包
-        result = subprocess.run(cmd, check=True, capture_output=True, text=True)
-        print("  ✓ 打包命令执行成功")
-        return True
-    except subprocess.CalledProcessError as e:
-        print(f"  ❌ 打包失败")
-        print(f"  错误信息: {e.stderr}")
-        return False
+        # 执行打包，实时显示输出
+        process = subprocess.Popen(
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,  # 将stderr合并到stdout
+            text=True,
+            bufsize=0,  # 无缓冲，立即输出
+            universal_newlines=True,
+            encoding='utf-8',
+            errors='replace'  # 处理编码错误
+        )
+        
+        # 实时输出每一行，只显示关键信息
+        output_lines = []
+        last_status = ""
+        last_message = ""  # 避免重复显示相同消息
+        
+        # 使用迭代器逐行读取，并立即刷新输出
+        for line in iter(process.stdout.readline, ''):
+            if not line:
+                break
+            line = line.rstrip()
+            if line:
+                output_lines.append(line)
+                line_lower = line.lower()
+                
+                # 只显示关键阶段信息
+                current_message = ""
+                if any(keyword in line_lower for keyword in [
+                    'analyzing modules for base_library',  # 分析基础库
+                    'analyzing ',  # 分析主程序（简化显示）
+                    'building',  # 构建
+                    'creating',  # 创建
+                    'copying',  # 复制
+                    'writing',  # 写入
+                    'checking',  # 检查
+                    'collecting',  # 收集
+                    'running analysis',  # 运行分析
+                    'looking for python',  # 查找Python
+                    'using python',  # 使用Python
+                    'platform:',  # 平台信息
+                    'pyinstaller:',  # PyInstaller版本
+                ]):
+                    # 简化显示，只显示关键部分
+                    if 'analyzing ' in line_lower and '.py' in line:
+                        # 只显示"Analyzing 主程序文件"
+                        if '交叉口' in line or 'intersection' in line_lower:
+                            current_message = "📦 正在分析主程序..."
+                    elif 'building' in line_lower and 'analysis' not in line_lower:
+                        current_message = "🔨 正在构建..."
+                    elif 'creating' in line_lower and 'pyz' in line_lower:
+                        current_message = "📝 正在创建压缩包..."
+                    elif 'copying' in line_lower:
+                        current_message = "📋 正在复制文件..."
+                    elif 'writing' in line_lower and ('exe' in line_lower or 'executable' in line_lower):
+                        current_message = "💾 正在写入可执行文件..."
+                    elif 'checking' in line_lower and 'analysis' in line_lower:
+                        current_message = "✓ 检查完成"
+                    elif 'collecting' in line_lower:
+                        current_message = "📚 正在收集依赖..."
+                    elif 'running analysis' in line_lower:
+                        current_message = "🔍 运行依赖分析..."
+                    elif 'platform:' in line_lower or 'pyinstaller:' in line_lower:
+                        # 只显示一次环境信息
+                        if not last_status.startswith("环境"):
+                            current_message = line.split('INFO:')[-1].strip()
+                            last_status = "环境"
+                
+                # 显示警告和错误（重要），但过滤掉乱码行
+                if 'warning' in line_lower or 'error' in line_lower or 'failed' in line_lower:
+                    # 过滤掉包含乱码的警告行（通常是路径问题）
+                    if 'warnings written to' in line_lower or 'warn-' in line_lower:
+                        # 跳过这些乱码警告行
+                        continue
+                    # 处理隐藏导入错误（这些是可选的，不影响打包）
+                    if 'hidden import' in line_lower and 'not found' in line_lower:
+                        # 这些是可选的pywin32模块，没有安装也不影响
+                        module_name = line.split("'")[1] if "'" in line else ""
+                        if module_name in ['win32file', 'pywintypes', 'win32con']:
+                            # 这些是可选的，不显示错误，只记录
+                            continue
+                    # 处理权限错误（PyInstaller会自动重试，通常不是问题）
+                    if 'permission denied' in line_lower and 'retrying' in line_lower:
+                        # 这是正常的重试，不显示
+                        continue
+                    # 显示其他重要的警告和错误
+                    error_msg = line.split('INFO:')[-1].strip() if 'INFO:' in line else line
+                    error_msg = line.split('ERROR:')[-1].strip() if 'ERROR:' in line else error_msg
+                    error_msg = line.split('WARNING:')[-1].strip() if 'WARNING:' in line else error_msg
+                    current_message = f"⚠ {error_msg}"
+                # 显示完成信息
+                elif any(keyword in line_lower for keyword in ['complete', 'success', 'done', 'finished', 'successfully']):
+                    current_message = f"✓ {line.split('INFO:')[-1].strip() if 'INFO:' in line else line}"
+                # 显示最终结果
+                elif 'executable' in line_lower or ('exe' in line_lower and ('created' in line_lower or 'written' in line_lower)):
+                    current_message = f"✅ {line.split('INFO:')[-1].strip() if 'INFO:' in line else line}"
+                
+                # 只显示新消息，避免重复
+                if current_message and current_message != last_message:
+                    print(f"  {current_message}", flush=True)  # 立即刷新输出
+                    last_message = current_message
+        
+        # 等待进程完成
+        return_code = process.wait()
+        
+        print("  " + "=" * 60)
+        
+        if return_code == 0:
+            print("  ✓ 打包命令执行成功")
+            return True
+        else:
+            print(f"  ❌ 打包失败，退出码: {return_code}")
+            # 显示最后几行错误信息
+            if output_lines:
+                print("  最后几行输出：")
+                for line in output_lines[-10:]:
+                    print(f"    {line}")
+            return False
     except FileNotFoundError:
+        print("  " + "=" * 60)
         print("  ❌ 未找到 PyInstaller，请先安装: pip install pyinstaller")
+        return False
+    except Exception as e:
+        print("  " + "=" * 60)
+        print(f"  ❌ 打包过程出错: {e}")
+        import traceback
+        traceback.print_exc()
         return False
 
 def verify_build():
