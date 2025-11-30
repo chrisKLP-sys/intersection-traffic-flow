@@ -22,9 +22,42 @@ import re
 import platform
 import os
 import sys
-import json
+import threading
+import tempfile
 
+# 导入ttkbootstrap（如果可用）
+try:
+    import ttkbootstrap as ttkb
+    from ttkbootstrap.constants import *
+    TTKBOOTSTRAP_AVAILABLE = True
+except ImportError:
+    TTKBOOTSTRAP_AVAILABLE = False
+    ttkb = None
 
+# 导入更新检查模块
+try:
+    import update_checker
+    UPDATE_CHECKER_AVAILABLE = True
+except ImportError:
+    UPDATE_CHECKER_AVAILABLE = False
+
+# 程序启动时检查待安装的更新
+if UPDATE_CHECKER_AVAILABLE:
+    try:
+        has_pending, new_file_path, current_exe_path, version, language = update_checker.check_pending_update()
+        if has_pending:
+            # 执行待安装的更新
+            success, error = update_checker.execute_pending_update()
+            if success:
+                # 安装成功，程序会启动新版本，当前程序退出
+                import os
+                os._exit(0)
+            else:
+                # 安装失败，继续运行当前程序
+                print(f"自动安装更新失败: {error}")
+    except Exception as e:
+        # 检查更新时出错，继续运行当前程序
+        print(f"检查待安装更新时出错: {e}")
 
 plt.ioff()
 
@@ -49,7 +82,8 @@ LANGUAGES = {
         'entry_number': '进口编号',
         'entry_name': '进口名称',
         'angle': '方位角',
-        'angle_notice': "⚠ 注意：'方位角'以正东方向为0度，逆时针增加。例如：0度 = 正东，90度 = 正北，180度 = 正西，270度 = 正南。",
+        'important_notice': '重要提醒',
+        'notice_content': "1. '方位角'以正东方向为0度，逆时针增加。例如：0度 = 正东，90度 = 正北，180度 = 正西，270度 = 正南。\n2. 请注意转向流量的输入顺序，以道路中心线为基准，靠近中心线的流线优先输入，例如，右行规则下，4路交叉口的输入顺序分别为：掉头、左转、直行、右转，左行规则下则为：掉头、右转、直行、左转。",
         'entry': '进口',
         'u_turn': '掉头',
         'left_turn': '左转',
@@ -74,13 +108,13 @@ LANGUAGES = {
         # 文件操作
         'file_saved': '数据已保存到 {file}',
         'file_saved_success': '成功',
+        'file_no_save_target': '没有可保存的文件。请先加载文件。',
         'file_load_success': '数据加载成功！已识别为{num}路交叉口。',
         'file_load_error': '错误',
         'file_save_error': '保存文件时出错：{error}',
         'file_load_error_msg': '读取文件时出错：{error}',
         'file_empty': '文件为空。',
         'file_encoding_error': '无法读取文件 {file}，请检查文件编码。',
-        'file_format_error': '文件格式不正确，第一行应包含\'本交叉口为X路交叉口\'声明。',
         'file_format_error_infer': '文件格式不正确，无法推断交叉口路数。',
         'file_num_entries_error': '交叉口路数错误，请核对数据后再读取',
         'file_num_entries_infer_error': '无法从数据推断路数，推断结果为{num}路，不在有效范围内（3-6路）',
@@ -114,7 +148,6 @@ LANGUAGES = {
         # 其他消息
         'parse_error': '解析数据时出错：{error}',
         'draw_error': '绘制图形时出错：{error}',
-        'select_dialog_error': '选择对话框出错：{error}',
         'data_cleared': '数据已清空',
         'new_table_created': '已创建新的{num}路交叉口数据表格',
         'help_file_not_found': '未找到帮助文档文件。\n\n预期位置：{file}\n\n请确保帮助文档.html文件与程序在同一目录。',
@@ -124,6 +157,59 @@ LANGUAGES = {
         'confirm_clear': '确定要清空所有数据吗？',
         'confirm_new_file': '当前数据已修改，确定要新建文件吗？未保存的修改将丢失。',
         'about': '关于',
+        
+        # 捐献相关
+        'btn_donate': '捐献',
+        'donate_title': '捐献支持',
+        'donate_message': '一分也是爱 ❤️\n\n您的支持，是我持续维护和升级此软件的最大动力。\n\n不捐也没关系，所有功能永久免费开放。\n\n感谢每一位同行的信任与鼓励！\n\n如果提示"验证姓氏"，请输入"何"',
+        
+        # 更新相关
+        'btn_check_update': '检查更新',
+        'update_checking': '正在检查更新...',
+        'update_downloading_title': '正在下载更新',
+        'update_checking_github': '正在从GitHub检查更新...',
+        'update_checking_gitee': '正在从Gitee检查更新...',
+        'update_available': '发现新版本',
+        'update_available_msg': '发现新版本 {version}！\n当前版本：{current}\n\n是否立即下载并更新？',
+        'update_latest': '已是最新版本',
+        'update_latest_msg': '您当前使用的是最新版本 {version}。',
+        'update_downloading': '正在下载更新...',
+        'update_download_progress': '下载进度：{percent}% ({downloaded}/{total})',
+        'update_download_success': '下载完成！',
+        'update_download_failed': '下载失败',
+        'update_download_failed_msg': '下载更新失败：{error}',
+        'update_install_failed': '安装失败',
+        'update_install_failed_msg': '安装更新时出错：{error}',
+        'update_error': '更新检查失败',
+        'update_error_msg': '检查更新时出错：{error}',
+        'update_network_error': '网络连接失败',
+        'update_network_error_msg': '请检查网络连接或VPN设置，或者稍后再试',
+        'update_prepared': '更新已准备',
+        'update_prepared_msg': '下载已完成，重启软件后生效',
+        'update_restart_now': '立即重启软件',
+        'update_install_restart_failed': '安装失败',
+        'update_install_restart_failed_msg': '安装更新时出错：{error}',
+        'update_no_download': '未找到下载链接',
+        'update_no_download_msg': '未找到可用的下载链接。',
+        'update_source_select': '选择更新源',
+        'update_source_gitee': 'Gitee',
+        'update_source_github': 'GitHub',
+        'update_source_gitee_note': 'Gitee（推荐中国大陆用户使用）',
+        'update_source_github_note': 'GitHub（推荐中国大陆以外用户使用）',
+        'update_source_gitee_button': '从Gitee更新',
+        'update_source_github_button': '从GitHub更新',
+        'update_cancel': '取消',
+        'update_download_and_install': '直接更新',
+        'update_save_as': '新版本另存为',
+        'update_skip': '跳过',
+        'update_close': '关闭',
+        'update_release_notes': '更新说明：',
+        'update_save_success': '保存成功',
+        'update_save_success_msg': '新版本已保存到：{path}',
+        'update_auto_available': '发现新版本',
+        'update_auto_available_msg': '发现新版本 {version}！\n当前版本：{current}\n更新源：{source}\n\n是否立即更新？',
+        'update_now': '立即更新',
+        'update_later': '稍后提醒',
     },
     'en_US': {
         # Window titles
@@ -143,7 +229,8 @@ LANGUAGES = {
         'entry_number': 'Entry No.',
         'entry_name': 'Entry Name',
         'angle': 'Angle',
-        'angle_notice': "⚠ Note: 'Angle' is measured from due east (0°), increasing counterclockwise. Example: 0° = East, 90° = North, 180° = West, 270° = South.",
+        'important_notice': 'Important Notice',
+        'notice_content': "1. 'Angle' is measured from due east (0°), increasing counterclockwise. Example: 0° = East, 90° = North, 180° = West, 270° = South.\n2. Please note the input order of turning flows. Based on the road centerline, flows closer to the centerline should be entered first. For example, under right-hand traffic rule, the input order for a 4-way intersection is: U-turn, Left turn, Straight, Right turn. Under left-hand traffic rule, it is: U-turn, Right turn, Straight, Left turn.",
         'entry': 'Entry',
         'u_turn': 'U-Turn',
         'left_turn': 'Left Turn',
@@ -168,13 +255,13 @@ LANGUAGES = {
         # File operations
         'file_saved': 'Data saved to {file}',
         'file_saved_success': 'Success',
+        'file_no_save_target': 'No file to save to. Please load a file first.',
         'file_load_success': 'Data loaded successfully! Identified as {num}-way intersection.',
         'file_load_error': 'Error',
         'file_save_error': 'Error saving file: {error}',
         'file_load_error_msg': 'Error reading file: {error}',
         'file_empty': 'File is empty.',
         'file_encoding_error': 'Cannot read file {file}, please check file encoding.',
-        'file_format_error': 'Invalid file format. First line should contain \'This intersection is an X-way intersection\' declaration.',
         'file_format_error_infer': 'Invalid file format. Cannot infer intersection type.',
         'file_num_entries_error': 'Intersection type error. Please check data before reading.',
         'file_num_entries_infer_error': 'Cannot infer intersection type from data. Inferred result is {num}-way, not in valid range (3-6 ways)',
@@ -205,10 +292,13 @@ LANGUAGES = {
         'btn_clear_data': 'Clear Data',
         'btn_about': 'About',
         
+        # Donation related
+        'btn_donate': 'Donate',
+        'donate_title': 'Donation Support',
+        'donate_message': 'Every penny counts! ❤️\n\nYour support is the greatest motivation for me to continue maintaining and upgrading this software.\n\nNo donation is fine, all features are permanently free.\n\nThank you for every colleague\'s trust and encouragement!\n\nIf prompted for "verification surname", please enter "何"',
         # Other messages
         'parse_error': 'Error parsing data: {error}',
         'draw_error': 'Error drawing diagram: {error}',
-        'select_dialog_error': 'Selection dialog error: {error}',
         'data_cleared': 'Data cleared',
         'new_table_created': 'Created new {num}-way intersection data table',
         'help_file_not_found': 'Help file not found.\n\nExpected location: {file}\n\nPlease ensure help.html is in the same directory as the program.',
@@ -218,6 +308,54 @@ LANGUAGES = {
         'confirm_clear': 'Are you sure you want to clear all data?',
         'confirm_new_file': 'Current data has been modified. Are you sure you want to create a new file? Unsaved changes will be lost.',
         'about': 'About',
+        
+        # Update related
+        'btn_check_update': 'Check for Updates',
+        'update_checking': 'Checking for updates...',
+        'update_downloading_title': 'Downloading Update',
+        'update_checking_github': 'Checking for updates from GitHub...',
+        'update_checking_gitee': 'Checking for updates from Gitee...',
+        'update_available': 'Update Available',
+        'update_available_msg': 'New version {version} is available!\nCurrent version: {current}\n\nWould you like to download and update now?',
+        'update_latest': 'Up to Date',
+        'update_latest_msg': 'You are using the latest version {version}.',
+        'update_downloading': 'Downloading update...',
+        'update_download_progress': 'Download progress: {percent}% ({downloaded}/{total})',
+        'update_download_success': 'Download complete!',
+        'update_download_failed': 'Download failed',
+        'update_download_failed_msg': 'Failed to download update: {error}',
+        'update_install_failed': 'Installation failed',
+        'update_install_failed_msg': 'Error installing update: {error}',
+        'update_error': 'Update check failed',
+        'update_error_msg': 'Error checking for updates: {error}',
+        'update_network_error': 'Network connection failed',
+        'update_network_error_msg': 'Please check your network connection or VPN settings, or try again later',
+        'update_prepared': 'Update prepared',
+        'update_prepared_msg': 'Download completed, will take effect after restarting the software',
+        'update_restart_now': 'Restart software now',
+        'update_install_restart_failed': 'Installation failed',
+        'update_install_restart_failed_msg': 'Error installing update: {error}',
+        'update_no_download': 'No download link found',
+        'update_no_download_msg': 'No available download link found.',
+        'update_source_select': 'Select Update Source',
+        'update_source_gitee': 'Gitee',
+        'update_source_github': 'GitHub',
+        'update_source_gitee_note': 'Gitee (Recommended for users in Mainland China)',
+        'update_source_github_note': 'GitHub (Recommended for users outside Mainland China)',
+        'update_source_gitee_button': 'Update from Gitee',
+        'update_source_github_button': 'Update from GitHub',
+        'update_cancel': 'Cancel',
+        'update_download_and_install': 'Update Now',
+        'update_save_as': 'Save As',
+        'update_skip': 'Skip',
+        'update_close': 'Close',
+        'update_release_notes': 'Release Notes:',
+        'update_save_success': 'Save Success',
+        'update_save_success_msg': 'New version saved to: {path}',
+        'update_auto_available': 'Update Available',
+        'update_auto_available_msg': 'New version {version} is available!\nCurrent version: {current}\nUpdate source: {source}\n\nWould you like to update now?',
+        'update_now': 'Update Now',
+        'update_later': 'Remind Me Later',
     }
 }
 
@@ -230,48 +368,194 @@ _ui_components = {
     'root': None,
 }
 
+# 全局变量：存储图标对象引用
+_app_icon = None
+_cached_pil_image = None  # 缓存缩放后的PIL Image对象（避免重复加载和缩放大文件）
+
+def set_window_icon(window):
+    """设置窗口图标为Sparrow.png（使用缓存优化性能）"""
+    global _app_icon, _cached_pil_image
+    try:
+        # 获取图标文件路径
+        if getattr(sys, 'frozen', False):
+            base_path = sys._MEIPASS
+        else:
+            base_path = os.path.dirname(os.path.abspath(__file__))
+        
+        icon_path = os.path.join(base_path, 'Sparrow.png')
+        
+        if os.path.exists(icon_path):
+            # 尝试使用PIL加载PNG图片
+            try:
+                from PIL import Image, ImageTk
+                
+                # 如果已有缓存的缩放图像，直接使用（避免重复加载和缩放大文件）
+                if _cached_pil_image is None:
+                    # 第一次加载：读取并缩放图标
+                    pil_image = Image.open(icon_path)
+                    # 优化：如果图标太大，先缩放到合适的大小（32x32或64x64）
+                    # 窗口图标通常只需要小尺寸，大图标会导致加载缓慢和抖动
+                    max_icon_size = 64  # 最大图标尺寸
+                    if pil_image.width > max_icon_size or pil_image.height > max_icon_size:
+                        # 保持宽高比缩放（使用兼容的重采样方法）
+                        try:
+                            # PIL 10.0.0+ 使用 Image.Resampling.LANCZOS
+                            pil_image.thumbnail((max_icon_size, max_icon_size), Image.Resampling.LANCZOS)
+                        except AttributeError:
+                            # 旧版本使用 Image.LANCZOS
+                            try:
+                                pil_image.thumbnail((max_icon_size, max_icon_size), Image.LANCZOS)
+                            except AttributeError:
+                                # 更旧的版本使用 ANTIALIAS
+                                pil_image.thumbnail((max_icon_size, max_icon_size), Image.ANTIALIAS)
+                    # 缓存缩放后的PIL图像
+                    _cached_pil_image = pil_image
+                else:
+                    # 使用缓存的图像（避免重复加载和缩放）
+                    pil_image = _cached_pil_image
+                
+                # 为当前窗口创建PhotoImage对象（每个窗口需要自己的PhotoImage）
+                icon_image = ImageTk.PhotoImage(pil_image, master=window)
+                window.iconphoto(True, icon_image)
+                
+                # 保持引用，避免被垃圾回收
+                if _app_icon is None:
+                    _app_icon = []
+                # 避免重复添加相同的图标引用
+                if icon_image not in _app_icon:
+                    _app_icon.append(icon_image)
+                return True
+            except ImportError:
+                # 如果没有PIL，尝试使用PhotoImage（仅支持GIF/PNG，但可能不支持PNG）
+                try:
+                    from tkinter import PhotoImage
+                    icon_image = PhotoImage(file=icon_path, master=window)
+                    window.iconphoto(True, icon_image)
+                    if _app_icon is None:
+                        _app_icon = []
+                    if icon_image not in _app_icon:
+                        _app_icon.append(icon_image)
+                    return True
+                except Exception as e:
+                    print(f"使用PhotoImage加载图标失败: {e}")
+            except Exception as e:
+                print(f"使用PIL加载图标失败: {e}")
+        
+        # 如果PNG加载失败，尝试使用ICO文件
+        try:
+            # 尝试使用Sparrow.ico（如果存在）
+            ico_path = os.path.join(base_path, 'Sparrow.ico')
+            if os.path.exists(ico_path):
+                window.iconbitmap(ico_path)
+                return True
+            # 尝试使用app_icon.ico（如果存在）
+            ico_path = os.path.join(base_path, 'app_icon.ico')
+            if os.path.exists(ico_path):
+                window.iconbitmap(ico_path)
+                return True
+        except Exception as e:
+            print(f"使用ICO文件设置图标失败: {e}")
+        
+        return False
+    except Exception as e:
+        # 设置图标失败不影响程序运行
+        print(f"设置窗口图标失败: {e}")
+        return False
+
 def update_ui_language():
     """更新所有界面文本为当前语言"""
     global _ui_components
     
-    # 更新窗口标题
-    if _ui_components['root']:
+    try:
+        # 更新窗口标题
+        if _ui_components.get('root'):
+            try:
+                table = _ui_components.get('table')
+                if table and hasattr(table, 'file_name') and table.file_name:
+                    file_name = os.path.basename(table.file_name)
+                    file_name_without_ext = os.path.splitext(file_name)[0]
+                    if table and hasattr(table, 'is_modified') and table.is_modified:
+                        _ui_components['root'].title(f"{file_name_without_ext} - {t('app_title_unsaved').split(' - ')[-1]}")
+                    else:
+                        _ui_components['root'].title(file_name_without_ext)
+                else:
+                    if table and hasattr(table, 'is_modified') and table.is_modified:
+                        _ui_components['root'].title(t('app_title_unsaved'))
+                    else:
+                        _ui_components['root'].title(t('app_title'))
+            except Exception as e:
+                # 如果更新标题失败，至少设置基本标题
+                try:
+                    _ui_components['root'].title(t('app_title'))
+                except:
+                    pass
+        
+        # 更新按钮文本
+        buttons = _ui_components.get('buttons', {})
+        try:
+            if 'new_file' in buttons and buttons['new_file']:
+                buttons['new_file'].config(text=t('btn_new_file'))
+        except:
+            pass
+        try:
+            if 'load' in buttons and buttons['load']:
+                buttons['load'].config(text=t('btn_load'))
+        except:
+            pass
+        try:
+            if 'clear_data' in buttons and buttons['clear_data']:
+                buttons['clear_data'].config(text=t('btn_clear_data'))
+        except:
+            pass
+        try:
+            if 'save' in buttons and buttons['save']:
+                buttons['save'].config(text=t('btn_save'))
+        except:
+            pass
+        try:
+            if 'save_as' in buttons and buttons['save_as']:
+                buttons['save_as'].config(text=t('btn_save_as'))
+        except:
+            pass
+        try:
+            if 'plot' in buttons and buttons['plot']:
+                buttons['plot'].config(text=t('btn_draw'))
+        except:
+            pass
+        try:
+            if 'help' in buttons and buttons['help']:
+                buttons['help'].config(text=t('btn_help'))
+        except:
+            pass
+        try:
+            if 'about' in buttons and buttons['about']:
+                buttons['about'].config(text=t('btn_about'))
+        except:
+            pass
+        
+        # 更新表格（如果存在且有效）
         table = _ui_components.get('table')
-        if table and hasattr(table, 'file_name') and table.file_name:
-            file_name = os.path.basename(table.file_name)
-            file_name_without_ext = os.path.splitext(file_name)[0]
-            if table and hasattr(table, 'is_modified') and table.is_modified:
-                _ui_components['root'].title(f"{file_name_without_ext} - {t('app_title_unsaved').split(' - ')[-1]}")
-            else:
-                _ui_components['root'].title(file_name_without_ext)
-        else:
-            if table and hasattr(table, 'is_modified') and table.is_modified:
-                _ui_components['root'].title(t('app_title_unsaved'))
-            else:
-                _ui_components['root'].title(t('app_title'))
-    
-    # 更新按钮文本
-    buttons = _ui_components.get('buttons', {})
-    if 'new_file' in buttons:
-        buttons['new_file'].config(text=t('btn_new_file'))
-    if 'load' in buttons:
-        buttons['load'].config(text=t('btn_load'))
-    if 'clear_data' in buttons:
-        buttons['clear_data'].config(text=t('btn_clear_data'))
-    if 'save' in buttons:
-        buttons['save'].config(text=t('btn_save'))
-    if 'save_as' in buttons:
-        buttons['save_as'].config(text=t('btn_save_as'))
-    if 'plot' in buttons:
-        buttons['plot'].config(text=t('btn_draw'))
-    if 'help' in buttons:
-        buttons['help'].config(text=t('btn_help'))
-    if 'about' in buttons:
-        buttons['about'].config(text=t('btn_about'))
-    
-    # 更新表格（如果存在）
-    if _ui_components.get('table'):
-        _ui_components['table'].update_language()
+        if table:
+            try:
+                # 检查table对象是否仍然有效（没有被销毁）
+                # Table继承自tk.Frame，应该有winfo_exists方法
+                if hasattr(table, 'winfo_exists'):
+                    try:
+                        exists = table.winfo_exists()
+                        if exists and hasattr(table, 'update_language'):
+                            table.update_language()
+                    except:
+                        # 如果检查失败，尝试直接调用update_language
+                        if hasattr(table, 'update_language'):
+                            table.update_language()
+                elif hasattr(table, 'update_language'):
+                    # 如果没有winfo_exists方法，直接尝试调用
+                    table.update_language()
+            except Exception as e:
+                # 如果更新表格失败，打印错误但不影响其他组件更新
+                print(f"更新表格语言失败: {e}")
+    except Exception as e:
+        print(f"更新界面语言时出错: {e}")
 
 def change_language(lang_code):
     """切换语言（全局生效）"""
@@ -279,7 +563,7 @@ def change_language(lang_code):
         # 更新主界面（如果已创建）
         if _ui_components.get('root'):
             update_ui_language()
-            # 重新调整窗口大小以适应新的文本长度
+            # 重新调整窗口大小以适应新的文本长度（保持位置）
             root = _ui_components.get('root')
             if root:
                 adjust_window_size(root)
@@ -315,10 +599,6 @@ def set_language(lang_code):
             pass
         return True
     return False
-
-def get_language():
-    """获取当前语言代码"""
-    return CURRENT_LANGUAGE
 
 # ==================== 配置文件管理 ====================
 CONFIG_FILE = 'config.txt'
@@ -475,19 +755,7 @@ def load_ui_font():
     return 'Arial'  # 最终回退
 
 def setup_modern_style(root):
-    """设置现代化的界面样式"""
-    style = ttk.Style()
-    
-    # 设置主题（根据系统选择）
-    system = platform.system()
-    if system == 'Windows':
-        try:
-            style.theme_use('vista')  # Windows Vista/7/10/11 风格
-        except:
-            style.theme_use('clam')  # 回退到clam主题
-    else:
-        style.theme_use('clam')  # 跨平台现代风格
-    
+    """设置现代化的界面样式（使用ttkbootstrap如果可用）"""
     # 获取字体
     ui_font_path = load_ui_font()
     
@@ -535,7 +803,45 @@ def setup_modern_style(root):
             else:
                 font_family = 'WenQuanYi Micro Hei'
     
-    # 配置默认字体
+    # 如果ttkbootstrap可用，使用它
+    if TTKBOOTSTRAP_AVAILABLE and ttkb:
+        try:
+            # 推荐主题：'cosmo', 'flatly', 'litera', 'minty', 'pulse', 'sandstone', 'united'
+            theme_name = 'flatly'  # 扁平风格主题
+            
+            # 如果root是ttkbootstrap Window，确保主题已设置
+            if hasattr(root, 'style'):
+                # ttkbootstrap Window已经有style属性，确保主题正确
+                try:
+                    root.style.theme_use(theme_name)
+                except:
+                    pass
+            else:
+                # 如果不是ttkbootstrap Window，创建Style对象
+                style = ttkb.Style(theme=theme_name)
+        except Exception as e:
+            print(f"使用ttkbootstrap主题失败: {e}，回退到传统样式")
+            # 回退到传统样式
+            style = ttk.Style()
+            if system == 'Windows':
+                try:
+                    style.theme_use('vista')
+                except:
+                    style.theme_use('clam')
+            else:
+                style.theme_use('clam')
+    else:
+        # 使用传统ttk样式
+        style = ttk.Style()
+        if system == 'Windows':
+            try:
+                style.theme_use('vista')
+            except:
+                style.theme_use('clam')
+        else:
+            style.theme_use('clam')
+    
+    # 配置默认字体（无论是否使用ttkbootstrap都需要）
     try:
         default_font = tkfont.nametofont("TkDefaultFont")
         default_font.configure(family=font_family, size=10)
@@ -548,49 +854,52 @@ def setup_modern_style(root):
     except Exception as e:
         print(f"配置默认字体失败: {e}")
     
-    # 配置按钮样式（现代化扁平风格）
-    try:
-        style.configure('TButton',
-                       font=(font_family, 10),
-                       padding=(12, 6),
-                       relief='flat',
-                       borderwidth=1)
+    # 如果未使用ttkbootstrap，配置传统样式
+    if not TTKBOOTSTRAP_AVAILABLE or not ttkb:
+        # 配置按钮样式（现代化扁平风格）
+        try:
+            style.configure('TButton',
+                           font=(font_family, 10),
+                           padding=(12, 6),
+                           relief='flat',
+                           borderwidth=1)
+            
+            style.map('TButton',
+                     background=[('active', '#e8e8e8'), ('!disabled', '#f0f0f0'), ('pressed', '#d0d0d0')],
+                     foreground=[('active', '#000000'), ('!disabled', '#000000')],
+                     bordercolor=[('focus', '#0078d4'), ('!focus', '#d0d0d0')])
+        except Exception as e:
+            print(f"配置按钮样式失败: {e}")
         
-        style.map('TButton',
-                 background=[('active', '#e8e8e8'), ('!disabled', '#f0f0f0'), ('pressed', '#d0d0d0')],
-                 foreground=[('active', '#000000'), ('!disabled', '#000000')],
-                 bordercolor=[('focus', '#0078d4'), ('!focus', '#d0d0d0')])
-    except Exception as e:
-        print(f"配置按钮样式失败: {e}")
-    
-    # 配置输入框样式
-    try:
-        style.configure('TEntry',
-                       font=(font_family, 10),
-                       fieldbackground='white',
-                       borderwidth=1,
-                       relief='solid',
-                       padding=4,
-                       bordercolor='#d0d0d0')
+        # 配置输入框样式
+        try:
+            style.configure('TEntry',
+                           font=(font_family, 10),
+                           fieldbackground='white',
+                           borderwidth=1,
+                           relief='solid',
+                           padding=4,
+                           bordercolor='#d0d0d0')
+            
+            style.map('TEntry',
+                     fieldbackground=[('focus', '#ffffff'), ('!focus', '#ffffff')],
+                     bordercolor=[('focus', '#0078d4'), ('!focus', '#d0d0d0')])
+        except Exception as e:
+            print(f"配置输入框样式失败: {e}")
         
-        style.map('TEntry',
-                 fieldbackground=[('focus', '#ffffff'), ('!focus', '#ffffff')],
-                 bordercolor=[('focus', '#0078d4'), ('!focus', '#d0d0d0')])
-    except Exception as e:
-        print(f"配置输入框样式失败: {e}")
-    
-    # 配置标签样式
-    try:
-        style.configure('TLabel',
-                       font=(font_family, 10),
-                       background='white',
-                       foreground='#333333')
-    except Exception as e:
-        print(f"配置标签样式失败: {e}")
+        # 配置标签样式
+        try:
+            style.configure('TLabel',
+                           font=(font_family, 10),
+                           background='white',
+                           foreground='#333333')
+        except Exception as e:
+            print(f"配置标签样式失败: {e}")
     
     # 配置主窗口背景
     try:
-        root.configure(bg='#f5f5f5')
+        if not TTKBOOTSTRAP_AVAILABLE or not hasattr(root, 'style'):
+            root.configure(bg='#f5f5f5')
     except:
         pass
     
@@ -666,6 +975,26 @@ else:
 # 全局变量：存储GUI界面使用的字体族名称
 GUI_FONT_FAMILY = None
 
+# ==================== 角度归一化函数 ====================
+def normalize_angle(angle):
+    """将角度归一化到0-360度范围
+    
+    参数:
+        angle: 角度值（可以是负数或大于360度的值）
+    
+    返回:
+        归一化后的角度值（0-360度）
+    """
+    try:
+        angle = float(angle)
+        normalized = angle % 360
+        if normalized < 0:
+            normalized += 360
+        return normalized
+    except (ValueError, TypeError):
+        # 如果无法转换为浮点数，返回原值（可能是空字符串等）
+        return angle
+
 class Table(tk.Frame):
     def __init__(self, parent, num_entries=4, traffic_rule='right'):
         tk.Frame.__init__(self, parent, bg='white', relief='flat', padx=10, pady=10)
@@ -676,11 +1005,18 @@ class Table(tk.Frame):
         self.is_modified = False
         
         # 初始化数据结构：names, angles, flow_0, flow_1, ..., flow_{N-1}
+        # raw_data: 存储用户输入的原始数据（未归一化、未排序）
+        # data: 存储处理后的数据（归一化、排序后），用于显示和绘制
+        self.raw_data = {
+            'names': [],
+            'angles': []
+        }
         self.data = {
             'names': [],
             'angles': []
         }
         for i in range(num_entries):
+            self.raw_data[f'flow_{i}'] = []
             self.data[f'flow_{i}'] = []
         
         # 生成表头
@@ -708,27 +1044,74 @@ class Table(tk.Frame):
         
         columns = len(headings)
         
-        # 添加方位角提示标签（醒目提示）- 在计算完列数后添加，以便正确设置columnspan
+        # 创建统一的提示信息容器 - 在计算完列数后添加，以便正确设置columnspan
         # 使用全局字体变量
         global GUI_FONT_FAMILY
         font_family = GUI_FONT_FAMILY if GUI_FONT_FAMILY else 'Microsoft YaHei UI'
-        notice_label = tk.Label(self, 
-                                text=t('angle_notice'),
-                                bg='#fff3cd',  # 黄色背景
+        
+        # 创建带边框的容器Frame
+        notice_container = tk.Frame(self, 
+                                    bg='#fff9e6',  # 浅黄色背景
+                                    relief='solid',
+                                    borderwidth=1,
+                                    padx=12,
+                                    pady=10)
+        notice_container.grid(row=0, column=0, columnspan=columns, padx=5, pady=(5, 12), sticky='ew')
+        self.notice_container = notice_container  # 保存引用以便更新语言
+        
+        # 标题：重要提醒
+        title_label = tk.Label(notice_container,
+                               text=t('important_notice'),
+                               bg='#fff9e6',
+                               fg='#856404',
+                               font=(font_family, 10, 'bold'),
+                               anchor='w')
+        title_label.pack(fill='x', pady=(0, 8))
+        self.notice_title_label = title_label  # 保存引用以便更新语言
+        
+        # 提示信息（完整文本，中间用\n分隔）
+        notice_text = t('notice_content').replace('\r\n', '\n').replace('\r', '\n')
+        # 清理连续的多个换行符，只保留一个
+        while '\n\n' in notice_text:
+            notice_text = notice_text.replace('\n\n', '\n')
+        notice_label = tk.Label(notice_container,
+                                text=notice_text,
+                                bg='#fff9e6',  # 与容器背景一致
                                 fg='#856404',  # 深黄色文字
-                                font=(font_family, 9, 'bold'),
-                                padx=10,
-                                pady=8,
-                                relief='solid',
-                                borderwidth=1,
+                                font=(font_family, 9),
                                 justify='left',
-                                wraplength=800)  # 设置换行长度，防止英文文本显示问题
-        notice_label.grid(row=0, column=0, columnspan=columns, padx=5, pady=(5, 10), sticky='ew')
+                                anchor='nw',
+                                wraplength=1)  # 初始值，将在窗口显示后更新
+        notice_label.pack(fill='both', expand=True)
         self.notice_label = notice_label  # 保存引用以便更新语言
+        
+        # 创建函数来更新wraplength，使其随容器宽度变化
+        def update_wraplength(event=None):
+            """更新提示标签的wraplength，使其适应容器宽度"""
+            try:
+                # 获取容器的实际宽度
+                notice_container.update_idletasks()
+                container_width = notice_container.winfo_width()
+                if container_width > 1:  # 确保容器已显示
+                    # 减去左右padding（12*2=24）和边距（5*2=10），留一些余量
+                    available_width = container_width - 34
+                    if available_width > 100:  # 确保最小宽度
+                        if hasattr(self, 'notice_label') and self.notice_label:
+                            self.notice_label.config(wraplength=available_width)
+            except:
+                pass
+        
+        # 保存函数引用以便后续调用
+        self.update_notice_wraplength = update_wraplength
+        
+        # 绑定容器大小变化事件
+        notice_container.bind('<Configure>', update_wraplength)
+        # 在窗口显示后也更新一次
+        self.after_idle(update_wraplength)
         
         # 添加交通规则选择控件
         rule_frame = tk.Frame(self, bg='white')
-        rule_frame.grid(row=1, column=0, columnspan=columns, padx=5, pady=5, sticky='w')
+        rule_frame.grid(row=2, column=0, columnspan=columns, padx=5, pady=5, sticky='w')
         self.rule_label = tk.Label(rule_frame, text=t('traffic_rule'), bg='white')
         self.rule_label.pack(side=tk.LEFT, padx=5)
         self.traffic_rule_var = tk.StringVar(value=traffic_rule)
@@ -743,7 +1126,11 @@ class Table(tk.Frame):
         self.heading_labels = []
         for column in range(columns):
             label = ttk.Label(self, text=headings[column])
-            label.grid(row=2, column=column, padx=5, pady=5, sticky='w')  # 改为row=2，因为提示标签和规则选择占用了row=0和row=1
+            # 表头对齐：第一列（进口编号）左对齐，其他列也左对齐以匹配Entry
+            if column == 0:
+                label.grid(row=3, column=column, padx=5, pady=5, sticky='w')
+            else:
+                label.grid(row=3, column=column, padx=5, pady=5, sticky='w')
             self.heading_labels.append(label)
 
         # 生成数据行（根据路数）
@@ -754,11 +1141,12 @@ class Table(tk.Frame):
         for row in range(1, num_entries + 1):
             current_row = []
             direction = ttk.Label(self, text=f"{t('entry')}{row}")
-            direction.grid(row=row+2, column=0, padx=5, pady=5, sticky='w')  # row+2因为表头在row=2
+            direction.grid(row=row+3, column=0, padx=5, pady=5, sticky='w')  # row+3因为表头在row=3
             for column in range(1, columns):
                 entry = ttk.Entry(self, width=10)
                 entry.bind('<KeyRelease>', self.mark_modified)
-                entry.grid(row=row+2, column=column, padx=5, pady=5)  # row+2因为表头在row=2
+                # 数据框对齐：与表头保持一致，使用相同的padx和sticky
+                entry.grid(row=row+3, column=column, padx=5, pady=5, sticky='w')  # row+3因为表头在row=3
                 # 如果是方位角列（第3列，索引为2），设置默认值
                 if column == 2:  # 方位角列（column 0是进口编号，column 1是进口名称，column 2是方位角）
                     default_angle = default_angles[row - 1]  # row从1开始，所以减1
@@ -800,53 +1188,183 @@ class Table(tk.Frame):
     
     def update_language(self):
         """更新表格中的语言文本"""
-        # 更新交通规则标签
-        if hasattr(self, 'rule_label'):
-            self.rule_label.config(text=t('traffic_rule'))
-        if hasattr(self, 'rule_right'):
-            self.rule_right.config(text=t('right_hand_rule'))
-        if hasattr(self, 'rule_left'):
-            self.rule_left.config(text=t('left_hand_rule'))
-        
-        # 更新表头
-        if hasattr(self, 'heading_labels') and len(self.heading_labels) >= 3:
-            self.heading_labels[0].config(text=t('entry_number'))
-            self.heading_labels[1].config(text=t('entry_name'))
-            self.heading_labels[2].config(text=t('angle'))
+        try:
+            # 更新交通规则标签
+            try:
+                if hasattr(self, 'rule_label') and self.rule_label:
+                    self.rule_label.config(text=t('traffic_rule'))
+            except:
+                pass
+            try:
+                if hasattr(self, 'rule_right') and self.rule_right:
+                    self.rule_right.config(text=t('right_hand_rule'))
+            except:
+                pass
+            try:
+                if hasattr(self, 'rule_left') and self.rule_left:
+                    self.rule_left.config(text=t('left_hand_rule'))
+            except:
+                pass
             
-            # 如果是4路交叉口，更新流向表头
-            if self.num_entries == 4 and len(self.heading_labels) >= 7:
-                if self.traffic_rule == 'left':
-                    self.heading_labels[3].config(text=t('u_turn'))
-                    self.heading_labels[4].config(text=t('right_turn'))
-                    self.heading_labels[5].config(text=t('straight'))
-                    self.heading_labels[6].config(text=t('left_turn'))
-                else:
-                    self.heading_labels[3].config(text=t('u_turn'))
-                    self.heading_labels[4].config(text=t('left_turn'))
-                    self.heading_labels[5].config(text=t('straight'))
-                    self.heading_labels[6].config(text=t('right_turn'))
+            # 更新表头
+            try:
+                if hasattr(self, 'heading_labels') and self.heading_labels and len(self.heading_labels) >= 3:
+                    if len(self.heading_labels) > 0 and self.heading_labels[0]:
+                        self.heading_labels[0].config(text=t('entry_number'))
+                    if len(self.heading_labels) > 1 and self.heading_labels[1]:
+                        self.heading_labels[1].config(text=t('entry_name'))
+                    if len(self.heading_labels) > 2 and self.heading_labels[2]:
+                        self.heading_labels[2].config(text=t('angle'))
+                    
+                    # 如果是4路交叉口，更新流向表头
+                    if self.num_entries == 4 and len(self.heading_labels) >= 7:
+                        if self.traffic_rule == 'left':
+                            if len(self.heading_labels) > 3 and self.heading_labels[3]:
+                                self.heading_labels[3].config(text=t('u_turn'))
+                            if len(self.heading_labels) > 4 and self.heading_labels[4]:
+                                self.heading_labels[4].config(text=t('right_turn'))
+                            if len(self.heading_labels) > 5 and self.heading_labels[5]:
+                                self.heading_labels[5].config(text=t('straight'))
+                            if len(self.heading_labels) > 6 and self.heading_labels[6]:
+                                self.heading_labels[6].config(text=t('left_turn'))
+                        else:
+                            if len(self.heading_labels) > 3 and self.heading_labels[3]:
+                                self.heading_labels[3].config(text=t('u_turn'))
+                            if len(self.heading_labels) > 4 and self.heading_labels[4]:
+                                self.heading_labels[4].config(text=t('left_turn'))
+                            if len(self.heading_labels) > 5 and self.heading_labels[5]:
+                                self.heading_labels[5].config(text=t('straight'))
+                            if len(self.heading_labels) > 6 and self.heading_labels[6]:
+                                self.heading_labels[6].config(text=t('right_turn'))
+            except Exception as e:
+                print(f"更新表头语言失败: {e}")
+            
+            # 更新重要提醒标题
+            try:
+                if hasattr(self, 'notice_title_label') and self.notice_title_label:
+                    self.notice_title_label.config(text=t('important_notice'))
+            except:
+                pass
+            
+            # 更新提示信息（完整文本）
+            try:
+                if hasattr(self, 'notice_label') and self.notice_label:
+                    notice_text = t('notice_content').replace('\r\n', '\n').replace('\r', '\n')
+                    # 清理连续的多个换行符，只保留一个
+                    while '\n\n' in notice_text:
+                        notice_text = notice_text.replace('\n\n', '\n')
+                    self.notice_label.config(text=notice_text)
+            except:
+                pass
+            
+            # 更新wraplength以适应新的文本
+            try:
+                if hasattr(self, 'update_notice_wraplength') and self.update_notice_wraplength:
+                    self.after_idle(self.update_notice_wraplength)
+            except:
+                pass
+        except Exception as e:
+            print(f"更新表格语言时出错: {e}")
+
+    def sort_by_angle(self):
+        """根据归一化后的角度对所有进口数据进行排序，并更新UI显示"""
+        if not self.data or 'angles' not in self.data or len(self.data['angles']) == 0:
+            return
         
-        # 更新方位角提示
-        if hasattr(self, 'notice_label'):
-            self.notice_label.config(text=t('angle_notice'), wraplength=800)
-
-    def set_data(self, data):
-        # 清空字典
-        for key in self.data:
-            self.data[key].clear()
-
-        # 设置新数据
-        self.data = data
+        # 获取所有数据列
         keys = list(self.data.keys())
-        # 确保数据长度匹配
+        num_entries = len(self.data['angles'])
+        
+        # 创建包含所有数据的元组列表，每个元组代表一行数据
+        # 元组格式：(归一化角度, 原始索引, names值, angles值, flow_0值, flow_1值, ...)
+        data_rows = []
+        for i in range(num_entries):
+            try:
+                angle = float(self.data['angles'][i])
+                normalized_angle = normalize_angle(angle)
+            except (ValueError, TypeError):
+                normalized_angle = 0.0
+            
+            row_data = [normalized_angle]  # 第一个元素是归一化角度，用于排序
+            row_data.append(i)  # 第二个元素是原始索引
+            # 添加所有列的值
+            for key in keys:
+                if i < len(self.data[key]):
+                    row_data.append(self.data[key][i])
+                else:
+                    row_data.append('')
+            data_rows.append(row_data)
+        
+        # 根据归一化角度排序
+        data_rows.sort(key=lambda x: x[0])
+        
+        # 重新组织排序后的数据
+        for key in keys:
+            self.data[key] = []
+        
+        for row_data in data_rows:
+            # row_data格式: [归一化角度, 原始索引, names值, angles值, flow_0值, flow_1值, ...]
+            # 跳过前两个元素（归一化角度和原始索引），从索引2开始是实际数据
+            for idx, key in enumerate(keys):
+                if idx + 2 < len(row_data):
+                    self.data[key].append(row_data[idx + 2])
+                else:
+                    self.data[key].append('')
+        
+        # 更新UI显示（显示归一化后的角度）
+        keys = list(self.data.keys())
         num_rows = min(len(self._widgets), len(self.data[keys[0]]) if keys else 0)
         for row in range(num_rows):
             for i, widget in enumerate(self._widgets[row]):
                 if i < len(keys):
                     widget.delete(0, tk.END)
                     value = self.data[keys[i]][row] if row < len(self.data[keys[i]]) else ''
+                    # 如果是角度列（索引为2），显示归一化后的值
+                    if i == 2 and value:
+                        try:
+                            normalized = normalize_angle(value)
+                            value = str(int(normalized)) if normalized == int(normalized) else str(normalized)
+                        except:
+                            pass
                     widget.insert(0, str(value))
+
+    def set_data(self, data):
+        # 清空字典
+        for key in self.data:
+            self.data[key].clear()
+        for key in self.raw_data:
+            self.raw_data[key].clear()
+
+        # 保存原始数据（用于文件保存）- 保持用户输入的原始角度值和顺序
+        for key in data:
+            if key in self.raw_data:
+                if isinstance(data[key], list):
+                    self.raw_data[key] = [str(v) for v in data[key]]
+                else:
+                    self.raw_data[key] = [str(data[key])]
+        
+        # 设置处理后的数据（归一化角度）
+        keys = list(data.keys())
+        for key in keys:
+            if key in self.data:
+                if key == 'angles':
+                    # 归一化角度
+                    normalized_angles = []
+                    for angle in data[key]:
+                        try:
+                            normalized = normalize_angle(angle)
+                            normalized_angles.append(str(int(normalized)) if normalized == int(normalized) else str(normalized))
+                        except:
+                            normalized_angles.append(str(angle))
+                    self.data[key] = normalized_angles
+                else:
+                    if isinstance(data[key], list):
+                        self.data[key] = [str(v) for v in data[key]]
+                    else:
+                        self.data[key] = [str(data[key])]
+        
+        # 排序数据
+        self.sort_by_angle()
         
         # 从文件加载数据后，清除修改标记
         self.is_modified = False
@@ -856,20 +1374,42 @@ class Table(tk.Frame):
         # 清空字典
         for key in self.data:
             self.data[key].clear()
+        for key in self.raw_data:
+            self.raw_data[key].clear()
 
+        # 从UI获取数据（用户输入的值，可能是归一化后的，也可能是新的原始值）
         for row in self._widgets:
             for i, widget in enumerate(row):
                 if i < len(keys):
-                    self.data[keys[i]].append(widget.get())
+                    value = widget.get()
+                    # 保存到raw_data（用户输入的值作为原始值）
+                    if keys[i] in self.raw_data:
+                        self.raw_data[keys[i]].append(value)
+                    # 如果是角度列，归一化后保存到data；否则直接保存
+                    if keys[i] == 'angles':
+                        try:
+                            normalized = normalize_angle(value)
+                            normalized_str = str(int(normalized)) if normalized == int(normalized) else str(normalized)
+                            self.data[keys[i]].append(normalized_str)
+                        except:
+                            self.data[keys[i]].append(value)
+                    else:
+                        self.data[keys[i]].append(value)
+        
+        # 排序数据（基于归一化后的角度）
+        self.sort_by_angle()
 
 
     def save_to_file(self):
         if self.file_name:
-            with open(self.file_name, 'w') as file:
-                for key, values in self.data.items():
+            # 先更新原始数据（从UI获取最新值）
+            self.get()
+            # 使用原始数据保存（保持用户输入的原始角度值和顺序）
+            with open(self.file_name, 'w', encoding='utf-8') as file:
+                for key, values in self.raw_data.items():
                     file.write(','.join(values) + '\n')
         else:
-            print("No file to save to. Please load a file first.")
+            print(t('file_no_save_target'))
 
 def adjust_window_size(window):
     """调整窗口大小以适应内容，并居中显示"""
@@ -929,11 +1469,66 @@ def center_window(window):
     """将窗口居中显示在当前显示器上（保留旧函数以兼容）"""
     adjust_window_size(window)
 
+def create_window(themename='flatly'):
+    """
+    创建窗口（使用ttkbootstrap如果可用，否则使用tk.Tk）
+    themename: ttkbootstrap主题名称（仅在ttkbootstrap可用时有效）
+    """
+    if TTKBOOTSTRAP_AVAILABLE and ttkb:
+        try:
+            window = ttkb.Window(themename=themename)
+            # 确保主题已应用
+            if hasattr(window, 'style'):
+                window.style.theme_use(themename)
+            return window
+        except Exception as e:
+            print(f"使用ttkbootstrap.Window失败: {e}，回退到tk.Tk")
+            return tk.Tk()
+    else:
+        return tk.Tk()
+
+def create_toplevel(parent=None, themename='flatly'):
+    """
+    创建Toplevel窗口（使用ttkbootstrap如果可用，否则使用tk.Toplevel）
+    parent: 父窗口（可以为None）
+    themename: ttkbootstrap主题名称（仅在ttkbootstrap可用时有效）
+    """
+    if TTKBOOTSTRAP_AVAILABLE and ttkb:
+        try:
+            if parent:
+                toplevel = ttkb.Toplevel(parent)
+                # 确保主题正确应用（ttkbootstrap Toplevel会自动继承父窗口主题，但为了保险起见）
+                if hasattr(toplevel, 'style') and hasattr(parent, 'style'):
+                    try:
+                        # 从父窗口获取主题
+                        parent_theme = parent.style.theme.name if hasattr(parent.style.theme, 'name') else themename
+                        toplevel.style.theme_use(parent_theme)
+                    except:
+                        pass
+                return toplevel
+            else:
+                # 如果没有父窗口，尝试创建一个独立的窗口
+                # ttkbootstrap的Toplevel需要父窗口，如果没有则回退到tk.Toplevel
+                return tk.Toplevel()
+        except Exception as e:
+            print(f"使用ttkbootstrap.Toplevel失败: {e}，回退到tk.Toplevel")
+            if parent:
+                return tk.Toplevel(parent)
+            else:
+                return tk.Toplevel()
+    else:
+        if parent:
+            return tk.Toplevel(parent)
+        else:
+            return tk.Toplevel()
+
 def select_intersection_type():
     """选择交叉口类型或读取文件"""
     # 直接创建一个独立的对话框窗口
-    dialog = tk.Tk()
+    dialog = create_window()
     dialog.title(t('select_intersection_type'))
+    # 设置窗口图标
+    set_window_icon(dialog)
     dialog.resizable(False, False)
     
     # 立即隐藏窗口，避免闪现
@@ -1338,13 +1933,20 @@ def load_data_from_file(file_name, table_instance, root_instance):
                 table_instance.pack()
             # 更新全局table引用
             table = table_instance
+            # 更新_ui_components中的table引用
+            global _ui_components
+            _ui_components['table'] = table_instance
             # 重新绑定按钮
             if 'plot_button' in globals():
                 plot_button.config(command=lambda: plot_traffic_flow(table))
-            # 调整窗口大小以适应新表格
+            # 调整窗口大小以适应新表格（保持位置）
             root_instance.update_idletasks()
             root_instance.update()
             adjust_window_size(root_instance)
+            # 对齐表格和按钮框架的宽度
+            if 'align_table_and_buttons' in globals():
+                root_instance.update_idletasks()
+                root_instance.update()
         
         # 设置数据
         table_instance.set_data(data)
@@ -1355,9 +1957,11 @@ def load_data_from_file(file_name, table_instance, root_instance):
         if hasattr(table_instance, 'traffic_rule_var'):
             table_instance.traffic_rule_var.set(traffic_rule)
         table_instance.is_modified = False
+        # 确保_ui_components中的table引用是最新的
+        _ui_components['table'] = table_instance
         if hasattr(update_window_title, 'root'):
             update_window_title()
-        # 调整窗口大小以适应内容
+        # 调整窗口大小以适应内容（保持位置）
         root_instance.update_idletasks()
         root_instance.update()
         adjust_window_size(root_instance)
@@ -1369,13 +1973,15 @@ def load_data_from_file(file_name, table_instance, root_instance):
 
 def on_load_data_click():
     """读取数据文件"""
-    global table, plot_button, root
+    global table, plot_button, root, _ui_components
     
     file_name = filedialog.askopenfilename(filetypes=[("Text Files", "*.txt"), ("All Files", "*.*")])
     if file_name:
         success, new_table = load_data_from_file(file_name, table, root)
         if success:
             table = new_table
+            # 更新_ui_components中的table引用
+            _ui_components['table'] = new_table
             # 调整窗口大小以适应新内容
             adjust_window_size(root)
             messagebox.showinfo(t('file_saved_success'), t('file_load_success', num=table.num_entries))
@@ -1455,15 +2061,17 @@ def on_clear_data_click():
 
 def on_new_file_click():
     """新建文件"""
-    global table, root
+    global table, root, _ui_components
     # 确认操作
     if table.is_modified:
         if not messagebox.askyesno(t('confirm'), t('confirm_new_file')):
             return
     
     # 创建简单的对话框选择交叉口类型
-    dialog = tk.Toplevel(root)
+    dialog = create_toplevel(root)
     dialog.title(t('select_intersection_type'))
+    # 设置窗口图标
+    set_window_icon(dialog)
     dialog.resizable(False, False)
     dialog.transient(root)  # 设置为父窗口的临时窗口
     dialog.grab_set()  # 模态对话框
@@ -1616,6 +2224,9 @@ def on_new_file_click():
         config = load_config()
         traffic_rule = config.get('traffic_rule', 'right')
         table = Table(root, num_entries=num_entries, traffic_rule=traffic_rule)
+        # 更新_ui_components中的table引用
+        global _ui_components
+        _ui_components['table'] = table
         if button_frame:
             table.pack(before=button_frame)
         else:
@@ -1623,10 +2234,15 @@ def on_new_file_click():
         # 重新绑定按钮
         if 'plot_button' in globals():
             plot_button.config(command=lambda: plot_traffic_flow(table))
-        # 调整窗口大小
+        # 调整窗口大小（保持位置，减少抖动）
         root.update_idletasks()
         root.update()
         adjust_window_size(root)
+        # 对齐表格和按钮框架的宽度
+        if 'align_table_and_buttons' in globals():
+            root.update_idletasks()
+            root.update()
+            align_table_and_buttons()
     
     # 清空数据并设置默认方位角
     # 计算方位角默认值（0-360度平均分布）
@@ -1643,9 +2259,1003 @@ def on_new_file_click():
                 widget.insert(0, str(int(default_angle)) if default_angle == int(default_angle) else str(default_angle))
     table.file_name = None
     table.is_modified = False
+    # 确保_ui_components中的table引用是最新的
+    _ui_components['table'] = table
     update_window_title()
     messagebox.showinfo(t('file_saved_success'), t('new_table_created', num=num_entries))
 
+
+def check_for_updates(parent=None):
+    """
+    检查更新
+    parent: 父窗口
+    """
+    if not UPDATE_CHECKER_AVAILABLE:
+        return
+    
+    # 获取父窗口
+    root_window = parent
+    if not root_window:
+        root_window = _ui_components.get('root')
+    
+    # 创建更新源选择对话框
+    parent_window = root_window if root_window else tk._default_root
+    source_dialog = create_toplevel(parent_window)
+    source_dialog.title(t('update_source_select'))
+    # 设置窗口图标
+    set_window_icon(source_dialog)
+    source_dialog.resizable(False, False)
+    if root_window:
+        source_dialog.transient(root_window)
+        source_dialog.grab_set()
+    
+    source_dialog.configure(bg='white')
+    main_frame = tk.Frame(source_dialog, bg='white', padx=30, pady=20)
+    main_frame.pack()
+    
+    font_family = GUI_FONT_FAMILY if GUI_FONT_FAMILY else 'Microsoft YaHei UI'
+    label_text = t('update_source_select') + ':'
+    label = tk.Label(main_frame, text=label_text, font=(font_family, 10), bg='white', fg='#333333')
+    label.pack(pady=(0, 20))
+    
+    # 按钮框架
+    button_frame = tk.Frame(main_frame, bg='white')
+    button_frame.pack(pady=(0, 15))
+    
+    # 从Gitee更新按钮
+    def on_gitee_update():
+        source_dialog.destroy()
+        show_update_dialog(root_window, 'gitee')
+    
+    gitee_button = ttk.Button(button_frame, text=t('update_source_gitee_button'), 
+                              command=on_gitee_update, width=20)
+    gitee_button.pack(pady=(0, 5))
+    
+    # Gitee备注
+    gitee_note = tk.Label(button_frame, text=t('update_source_gitee_note'),
+                         font=(font_family, 9), bg='white', fg='#666666')
+    gitee_note.pack(pady=(0, 15))
+    
+    # 从GitHub更新按钮
+    def on_github_update():
+        source_dialog.destroy()
+        show_update_dialog(root_window, 'github')
+    
+    github_button = ttk.Button(button_frame, text=t('update_source_github_button'), 
+                               command=on_github_update, width=20)
+    github_button.pack(pady=(0, 5))
+    
+    # GitHub备注
+    github_note = tk.Label(button_frame, text=t('update_source_github_note'),
+                          font=(font_family, 9), bg='white', fg='#666666')
+    github_note.pack(pady=(0, 10))
+    
+    # 取消按钮
+    def on_cancel():
+        source_dialog.destroy()
+    
+    cancel_button = ttk.Button(main_frame, text=t('update_cancel'), command=on_cancel, width=10)
+    cancel_button.pack(pady=(10, 0))
+    
+    # 居中显示
+    source_dialog.update_idletasks()
+    width = source_dialog.winfo_width()
+    height = source_dialog.winfo_height()
+    x = (source_dialog.winfo_screenwidth() // 2) - (width // 2)
+    y = (source_dialog.winfo_screenheight() // 2) - (height // 2)
+    source_dialog.geometry(f'{width}x{height}+{x}+{y}')
+    source_dialog.focus_set()
+
+
+def show_auto_update_notification(parent, version, current_version, source, release_notes=None):
+    """
+    显示自动检查更新的通知对话框
+    parent: 父窗口
+    version: 新版本号
+    current_version: 当前版本号
+    source: 更新源 ('gitee' 或 'github')
+    release_notes: 更新说明（可选）
+    """
+    if not UPDATE_CHECKER_AVAILABLE:
+        return
+    
+    # 获取父窗口
+    root_window = parent
+    if not root_window:
+        root_window = _ui_components.get('root')
+    
+    # 创建通知对话框
+    parent_window = root_window if root_window else tk._default_root
+    notify_dialog = create_toplevel(parent_window)
+    notify_dialog.title(t('update_auto_available'))
+    # 设置窗口图标
+    set_window_icon(notify_dialog)
+    notify_dialog.resizable(False, False)
+    if root_window:
+        notify_dialog.transient(root_window)
+        notify_dialog.grab_set()
+    
+    notify_dialog.configure(bg='white')
+    main_frame = tk.Frame(notify_dialog, bg='white', padx=30, pady=20)
+    main_frame.pack()
+    
+    font_family = GUI_FONT_FAMILY if GUI_FONT_FAMILY else 'Microsoft YaHei UI'
+    
+    # 显示更新信息
+    source_name = t('update_source_gitee') if source.lower() == 'gitee' else t('update_source_github')
+    info_text = t('update_auto_available_msg', version=version, current=current_version, source=source_name)
+    if release_notes:
+        # 只显示前200个字符
+        notes_preview = release_notes[:200] + ('...' if len(release_notes) > 200 else '')
+        info_text += f"\n\n{t('update_release_notes')}\n{notes_preview}"
+    
+    info_label = tk.Label(main_frame, text=info_text, font=(font_family, 10), 
+                          bg='white', fg='#333333', justify='left', wraplength=450)
+    info_label.pack(pady=(0, 20))
+    
+    # 按钮框架
+    button_frame = tk.Frame(main_frame, bg='white')
+    button_frame.pack()
+    
+    # 立即更新按钮
+    def on_update_now():
+        notify_dialog.destroy()
+        # 直接使用检测到的更新源打开更新对话框
+        show_update_dialog(root_window, source)
+    
+    update_button = ttk.Button(button_frame, text=t('update_now'), 
+                              command=on_update_now, width=15)
+    update_button.pack(side=tk.LEFT, padx=5)
+    
+    # 稍后提醒按钮
+    def on_later():
+        notify_dialog.destroy()
+    
+    later_button = ttk.Button(button_frame, text=t('update_later'), 
+                             command=on_later, width=15)
+    later_button.pack(side=tk.LEFT, padx=5)
+    
+    # 居中显示
+    notify_dialog.update_idletasks()
+    width = notify_dialog.winfo_width()
+    height = notify_dialog.winfo_height()
+    x = (notify_dialog.winfo_screenwidth() // 2) - (width // 2)
+    y = (notify_dialog.winfo_screenheight() // 2) - (height // 2)
+    notify_dialog.geometry(f'{width}x{height}+{x}+{y}')
+    notify_dialog.focus_set()
+
+
+def auto_check_update_background():
+    """
+    后台自动检查更新
+    先尝试Gitee，失败则尝试GitHub
+    如果发现新版本，在主线程中显示通知对话框
+    如果没有更新或检查失败，静默处理
+    """
+    if not UPDATE_CHECKER_AVAILABLE:
+        return
+    
+    def check_thread():
+        try:
+            # 获取当前版本
+            current_version = update_checker.get_current_version()
+            if not current_version:
+                # 如果无法获取版本号，尝试从version_info.txt直接读取
+                try:
+                    import os
+                    import re
+                    version_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'version_info.txt')
+                    if os.path.exists(version_file):
+                        with open(version_file, 'r', encoding='utf-8') as f:
+                            content = f.read()
+                            match = re.search(r'(?:filevers|prodvers)=\((\d+),\s*(\d+),\s*(\d+),\s*(\d+)\)', content)
+                            if match:
+                                current_version = f"{match.group(1)}.{match.group(2)}.{match.group(3)}"
+                except:
+                    pass
+                if not current_version:
+                    current_version = "2.4.0"  # 最后的默认版本
+            
+            # 先尝试Gitee源
+            result = None
+            source_used = None
+            gitee_success = False
+            
+            try:
+                result = update_checker.check_update('gitee')
+                # check_update 总是返回7个值: (success, version, download_url, release_notes, error_message, tag_name, filename)
+                if len(result) >= 7:
+                    success, version, download_url, release_notes, error, tag_name, filename = result[:7]
+                elif len(result) >= 5:
+                    success, version, download_url, release_notes, error = result[:5]
+                    tag_name = None
+                    filename = None
+                else:
+                    success = result[0] if len(result) > 0 else False
+                    version = result[1] if len(result) > 1 else None
+                    download_url = result[2] if len(result) > 2 else None
+                    release_notes = result[3] if len(result) > 3 else None
+                    error = result[4] if len(result) > 4 else None
+                    tag_name = None
+                    filename = None
+                
+                if success and version and download_url:
+                    # 检查版本
+                    comparison = update_checker.compare_versions(current_version, version)
+                    if comparison < 0:
+                        # 发现新版本，显示通知
+                        root_window = _ui_components.get('root')
+                        if root_window:
+                            root_window.after(0, lambda: show_auto_update_notification(
+                                root_window, version, current_version, 'gitee', release_notes
+                            ))
+                        return
+                    else:
+                        # 没有新版本，静默处理
+                        return
+            except Exception as e:
+                # Gitee检查失败（网络错误等），继续尝试GitHub
+                pass
+            
+            # 如果Gitee失败或没有成功检查到更新，尝试GitHub
+            try:
+                result = update_checker.check_update('github')
+                # check_update 总是返回7个值: (success, version, download_url, release_notes, error_message, tag_name, filename)
+                if len(result) >= 7:
+                    success, version, download_url, release_notes, error, tag_name, filename = result[:7]
+                elif len(result) >= 5:
+                    success, version, download_url, release_notes, error = result[:5]
+                    tag_name = None
+                    filename = None
+                else:
+                    success = result[0] if len(result) > 0 else False
+                    version = result[1] if len(result) > 1 else None
+                    download_url = result[2] if len(result) > 2 else None
+                    release_notes = result[3] if len(result) > 3 else None
+                    error = result[4] if len(result) > 4 else None
+                    tag_name = None
+                    filename = None
+                
+                if success and version and download_url:
+                    # 检查版本
+                    comparison = update_checker.compare_versions(current_version, version)
+                    if comparison < 0:
+                        # 发现新版本，显示通知
+                        root_window = _ui_components.get('root')
+                        if root_window:
+                            root_window.after(0, lambda: show_auto_update_notification(
+                                root_window, version, current_version, 'github', release_notes
+                            ))
+            except Exception as e:
+                # GitHub也失败，静默处理
+                pass
+        except Exception as e:
+            # 所有异常都静默处理，不打扰用户
+            pass
+    
+    # 在后台线程中运行
+    thread = threading.Thread(target=check_thread, daemon=True)
+    thread.start()
+
+
+def show_update_dialog(parent, source='gitee'):
+    """
+    显示更新对话框
+    parent: 父窗口
+    source: 更新源 ('github' 或 'gitee')
+    """
+    if not UPDATE_CHECKER_AVAILABLE:
+        return
+    
+    # 确保source有默认值并规范化
+    if not source:
+        source = 'gitee'
+    source = source.lower().strip()
+    if source not in ['github', 'gitee']:
+        source = 'gitee'  # 默认使用gitee
+    
+    # 创建更新对话框
+    parent_window = parent if parent else tk._default_root
+    update_dialog = create_toplevel(parent_window)
+    update_dialog.title(t('update_checking'))
+    # 设置窗口图标
+    set_window_icon(update_dialog)
+    # 允许调整大小，以便显示长错误信息
+    update_dialog.resizable(True, True)
+    # 设置最小宽度，确保能容纳长文本
+    update_dialog.minsize(500, 200)
+    if parent:
+        update_dialog.transient(parent)
+        update_dialog.grab_set()
+    
+    update_dialog.configure(bg='white')
+    main_frame = tk.Frame(update_dialog, bg='white', padx=30, pady=20)
+    main_frame.pack(fill='both', expand=True)
+    
+    font_family = GUI_FONT_FAMILY if GUI_FONT_FAMILY else 'Microsoft YaHei UI'
+    
+    # 状态标签
+    status_label = tk.Label(main_frame, 
+                           text=t('update_checking_github') if source == 'github' else t('update_checking_gitee'),
+                           font=(font_family, 10),
+                           bg='white', fg='#333333')
+    status_label.pack(pady=(0, 15))
+    
+    # 进度条 - 检查更新阶段使用确定模式
+    progress_var = tk.DoubleVar()
+    progress_bar = ttk.Progressbar(main_frame, variable=progress_var, maximum=100, length=400, mode='determinate')
+    progress_bar.pack(pady=(0, 15))
+    progress_var.set(0)  # 初始化为0
+    
+    # 详细信息标签 - 增加wraplength以容纳长错误信息
+    # 中英文错误信息可能较长，设置wraplength为500像素
+    info_label = tk.Label(main_frame, text='', font=(font_family, 9), bg='white', fg='#666666', 
+                         wraplength=500, justify='left', anchor='w')
+    info_label.pack(pady=(0, 15), fill='x', padx=10)
+    
+    # 按钮框架
+    button_frame = tk.Frame(main_frame, bg='white')
+    button_frame.pack(pady=10)
+    
+    close_button = ttk.Button(button_frame, text=t('update_close'), 
+                             command=update_dialog.destroy, width=12)
+    close_button.pack(side=tk.LEFT, padx=5)
+    
+    download_button = None
+    skip_button = None
+    save_as_button = None
+    
+    # 居中显示，设置初始大小
+    update_dialog.update_idletasks()
+    # 设置初始宽度为500，高度自适应
+    initial_width = 500
+    initial_height = max(update_dialog.winfo_reqheight(), 200)
+    x = (update_dialog.winfo_screenwidth() // 2) - (initial_width // 2)
+    y = (update_dialog.winfo_screenheight() // 2) - (initial_height // 2)
+    update_dialog.geometry(f'{initial_width}x{initial_height}+{x}+{y}')
+    
+    # 在后台线程中检查更新
+    def check_update_thread():
+        # 保存source到局部变量，避免闭包问题，并确保是字符串
+        update_source = str(source).lower().strip()
+        if update_source not in ['github', 'gitee']:
+            update_source = 'gitee'
+        
+        # 模拟检查进度（0-90%）
+        def update_check_progress(percent):
+            def update():
+                try:
+                    progress_var.set(percent)
+                    progress_bar['value'] = percent  # 直接设置值
+                    progress_bar.update_idletasks()
+                    update_dialog.update_idletasks()
+                    update_dialog.update()  # 强制刷新
+                except:
+                    pass
+            update_dialog.after(0, update)
+        
+        try:
+            # 开始检查，进度到30%
+            update_check_progress(30)
+            
+            current_version = update_checker.get_current_version()
+            if not current_version:
+                # 如果无法获取版本号，尝试从version_info.txt直接读取
+                try:
+                    import os
+                    import re
+                    version_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'version_info.txt')
+                    if os.path.exists(version_file):
+                        with open(version_file, 'r', encoding='utf-8') as f:
+                            content = f.read()
+                            match = re.search(r'(?:filevers|prodvers)=\((\d+),\s*(\d+),\s*(\d+),\s*(\d+)\)', content)
+                            if match:
+                                current_version = f"{match.group(1)}.{match.group(2)}.{match.group(3)}"
+                except:
+                    pass
+                if not current_version:
+                    current_version = "2.4.0"  # 最后的默认版本
+            
+            # 进度到60%
+            update_check_progress(60)
+            
+            # check_update 返回 7 个值: (success, version, download_url, release_notes, error_message, tag_name, filename)
+            result = update_checker.check_update(update_source)
+            if len(result) == 7:
+                success, version, download_url, release_notes, error, tag_name, filename = result
+            else:
+                # 向后兼容：如果返回 5 个值
+                success, version, download_url, release_notes, error = result[:5]
+                tag_name = None
+                filename = None
+            
+            # 进度到90%
+            update_check_progress(90)
+            
+            # 更新UI（需要在主线程中执行）
+            def update_ui():
+                # 检查是否是网络连接错误
+                is_network_error = False
+                if error:
+                    error_lower = str(error).lower()
+                    network_keywords = ['timeout', 'connection', '网络', '连接', 'unreachable', 'dns', 'refused']
+                    is_network_error = any(keyword in error_lower for keyword in network_keywords)
+                
+                if not success:
+                    if is_network_error:
+                        # 网络连接错误：进度条到80%，弹出错误对话框
+                        progress_var.set(80)
+                        progress_bar['value'] = 80  # 直接设置值
+                        progress_bar.update_idletasks()
+                        update_dialog.update_idletasks()
+                        update_dialog.update()
+                        
+                        # 弹出错误对话框
+                        from tkinter import messagebox
+                        messagebox.showerror(
+                            t('update_network_error'),
+                            t('update_network_error_msg'),
+                            parent=update_dialog
+                        )
+                        
+                        status_label.config(text=t('update_network_error'), fg='#cc0000')
+                        info_label.config(text=t('update_network_error_msg'))
+                    else:
+                        # 其他错误：进度条到100%，显示错误信息
+                        progress_var.set(100)
+                        progress_bar['value'] = 100  # 直接设置值
+                        progress_bar.update_idletasks()
+                        update_dialog.update_idletasks()
+                        update_dialog.update()
+                        status_label.config(text=t('update_error'), fg='#cc0000')
+                        info_label.config(text=t('update_error_msg', error=error or 'Unknown error'))
+                    return
+                
+                # 检查完成，进度条到100%
+                progress_var.set(100)
+                progress_bar.update_idletasks()
+                update_dialog.update_idletasks()
+                update_dialog.update()
+                
+                if not download_url:
+                    status_label.config(text=t('update_no_download'), fg='#cc0000')
+                    info_label.config(text=t('update_no_download_msg'))
+                    return
+                
+                # 比较版本
+                comparison = update_checker.compare_versions(current_version, version)
+                
+                if comparison < 0:
+                    # 有新版本
+                    status_label.config(text=t('update_available'), fg='#0066cc')
+                    info_text = t('update_available_msg', version=version, current=current_version)
+                    if release_notes:
+                        info_text += f"\n\n{t('update_release_notes')}\n{release_notes[:200]}"
+                    info_label.config(text=info_text)
+                    # 保持100%显示，等待用户选择
+                    
+                    # 添加下载选项按钮
+                    def on_download_and_install():
+                        # 隐藏按钮
+                        if download_button:
+                            download_button.pack_forget()
+                        if save_as_button:
+                            save_as_button.pack_forget()
+                        if skip_button:
+                            skip_button.pack_forget()
+                        update_dialog.update_idletasks()
+                        
+                        # 重置进度条，从0开始下载
+                        progress_var.set(0)
+                        progress_bar.update_idletasks()
+                        download_update(update_dialog, status_label, info_label, progress_bar, progress_var,
+                                      download_url, version, auto_install=True,
+                                      buttons=(download_button, save_as_button, skip_button))
+                    
+                    def on_save_as():
+                        # 隐藏按钮
+                        if download_button:
+                            download_button.pack_forget()
+                        if save_as_button:
+                            save_as_button.pack_forget()
+                        if skip_button:
+                            skip_button.pack_forget()
+                        update_dialog.update_idletasks()
+                        
+                        # 重置进度条，从0开始下载
+                        progress_var.set(0)
+                        progress_bar.update_idletasks()
+                        download_update(update_dialog, status_label, info_label, progress_bar, progress_var,
+                                      download_url, version, auto_install=False,
+                                      buttons=(download_button, save_as_button, skip_button))
+                    
+                    def on_skip():
+                        update_dialog.destroy()
+                    
+                    nonlocal download_button, skip_button, close_button, save_as_button
+                    
+                    # 隐藏或销毁关闭按钮
+                    try:
+                        close_button.pack_forget()
+                        close_button.destroy()
+                        close_button = None
+                    except:
+                        pass
+                    
+                    # 如果按钮已存在，先销毁
+                    try:
+                        if download_button:
+                            download_button.destroy()
+                        if skip_button:
+                            skip_button.destroy()
+                        if save_as_button:
+                            save_as_button.destroy()
+                    except:
+                        pass
+                    
+                    # 确保按钮框架可见
+                    button_frame.pack(pady=15)
+                    
+                    # 创建新按钮：直接更新、另存为、跳过
+                    download_button = ttk.Button(button_frame, text=t('update_download_and_install'), 
+                                                command=on_download_and_install, width=15)
+                    download_button.pack(side=tk.LEFT, padx=5, pady=5)
+                    
+                    save_as_button = ttk.Button(button_frame, text=t('update_save_as'), 
+                                                command=on_save_as, width=15)
+                    save_as_button.pack(side=tk.LEFT, padx=5, pady=5)
+                    
+                    skip_button = ttk.Button(button_frame, text=t('update_skip'), 
+                                            command=on_skip, width=15)
+                    skip_button.pack(side=tk.LEFT, padx=5, pady=5)
+                    
+                    
+                    # 强制更新对话框布局并显示
+                    button_frame.update_idletasks()
+                    main_frame.update_idletasks()
+                    update_dialog.update_idletasks()
+                    
+                    # 调整对话框大小以适应新内容
+                    update_dialog.update()
+                    new_height = max(update_dialog.winfo_reqheight(), 350)
+                    # 重新计算居中位置
+                    screen_width = update_dialog.winfo_screenwidth()
+                    screen_height = update_dialog.winfo_screenheight()
+                    new_x = (screen_width // 2) - (initial_width // 2)
+                    new_y = (screen_height // 2) - (new_height // 2)
+                    update_dialog.geometry(f'{initial_width}x{new_height}+{new_x}+{new_y}')
+                    update_dialog.update()
+                    
+                    # 再次强制刷新
+                    update_dialog.update_idletasks()
+                    update_dialog.update()
+                else:
+                    # 已是最新版本
+                    status_label.config(text=t('update_latest'), fg='#00aa00')
+                    info_label.config(text=t('update_latest_msg', version=current_version))
+                    # 保持100%显示
+            
+            update_dialog.after(0, update_ui)
+            
+        except Exception as e:
+            # 捕获异常信息到局部变量，避免闭包问题
+            error_msg = str(e)
+            error_lower = str(error_msg).lower()
+            network_keywords = ['timeout', 'connection', '网络', '连接', 'unreachable', 'dns', 'refused']
+            is_network_error = any(keyword in error_lower for keyword in network_keywords)
+            
+            def show_error():
+                if is_network_error:
+                    # 网络连接错误：进度条到80%，弹出错误对话框
+                    progress_var.set(80)
+                    progress_bar['value'] = 80  # 直接设置值
+                    progress_bar.update_idletasks()
+                    update_dialog.update_idletasks()
+                    update_dialog.update()
+                    
+                    # 弹出错误对话框
+                    from tkinter import messagebox
+                    messagebox.showerror(
+                        t('update_network_error'),
+                        t('update_network_error_msg'),
+                        parent=update_dialog
+                    )
+                    
+                    status_label.config(text=t('update_network_error'), fg='#cc0000')
+                    info_label.config(text=t('update_network_error_msg'))
+                else:
+                    # 其他错误：进度条到100%，显示错误信息
+                    progress_var.set(100)
+                    progress_bar.update_idletasks()
+                    status_label.config(text=t('update_error'), fg='#cc0000')
+                    info_label.config(text=t('update_error_msg', error=error_msg))
+            update_dialog.after(0, show_error)
+    
+    # 启动检查线程
+    thread = threading.Thread(target=check_update_thread, daemon=True)
+    thread.start()
+
+
+def download_update(dialog, status_label, info_label, progress_bar, progress_var, download_url, version, auto_install=True, buttons=None):
+    """
+    下载更新
+    auto_install: True=下载后自动安装, False=下载后另存为
+    buttons: (download_button, save_as_button, skip_button) 按钮引用，用于在下载完成后重新显示
+    """
+    if not UPDATE_CHECKER_AVAILABLE:
+        return
+    
+    # 更新窗口标题和状态
+    dialog.title(t('update_downloading_title'))
+    status_label.config(text=t('update_downloading'), fg='#0066cc')
+    info_label.config(text='')
+    
+    # 停止不确定模式动画，切换到确定模式
+    progress_bar.stop()
+    progress_bar.config(mode='determinate', maximum=100)
+    progress_var.set(0)
+    progress_bar.update_idletasks()
+    
+    # 如果是另存为，先让用户选择保存位置
+    if not auto_install:
+        from tkinter import filedialog
+        # 获取当前可执行文件的目录
+        if getattr(sys, 'frozen', False):
+            default_dir = os.path.dirname(sys.executable)
+        else:
+            default_dir = os.path.dirname(os.path.abspath(__file__))
+        
+        # 建议的文件名（根据当前语言）
+        if CURRENT_LANGUAGE == 'zh_CN':
+            suggested_filename = f'交叉口交通流量流向可视化工具{version}.exe'
+        else:
+            suggested_filename = f'IntersectionTrafficFlowVisualize{version}.exe'
+        
+        # 打开文件保存对话框
+        filetypes_text = [('Executable files', '*.exe'), ('All files', '*.*')] if CURRENT_LANGUAGE != 'zh_CN' else [('可执行文件', '*.exe'), ('所有文件', '*.*')]
+        save_path = filedialog.asksaveasfilename(
+            parent=dialog,
+            title=t('update_save_as'),
+            initialdir=default_dir,
+            initialfile=suggested_filename,
+            defaultextension='.exe',
+            filetypes=filetypes_text
+        )
+        
+        if not save_path:
+            # 用户取消了保存
+            status_label.config(text=t('update_cancel'), fg='#666666')
+            info_label.config(text='')
+            progress_bar.stop()
+            return
+        
+        temp_file = save_path
+    else:
+        # 创建临时文件
+        temp_dir = tempfile.gettempdir()
+        temp_file = os.path.join(temp_dir, f'update_{version}.exe')
+    
+    # 下载进度回调（在后台线程中调用，需要通过after在主线程中更新UI）
+    downloaded_bytes = [0]
+    total_bytes = [0]
+    
+    # 限制更新频率，避免过于频繁的UI更新（每100KB更新一次）
+    last_update_size = [0]
+    UPDATE_INTERVAL = 100 * 1024  # 100KB
+    
+    def progress_callback(downloaded, total):
+        downloaded_bytes[0] = downloaded
+        total_bytes[0] = total
+        
+        # 限制更新频率
+        if downloaded - last_update_size[0] < UPDATE_INTERVAL and downloaded < total:
+            return
+        
+        last_update_size[0] = downloaded
+        
+        # 格式化大小
+        def format_size(size):
+            if size < 1024:
+                return f"{size}B"
+            elif size < 1024 * 1024:
+                return f"{size/1024:.1f}KB"
+            else:
+                return f"{size/(1024*1024):.1f}MB"
+        
+        # 在主线程中更新UI
+        def update_progress():
+            try:
+                if total > 0:
+                    # 有总大小，显示百分比
+                    percent = (downloaded / total) * 100
+                    progress_var.set(percent)
+                    # 同时直接设置进度条值，确保更新
+                    progress_bar['value'] = percent
+                    info_text = t('update_download_progress', 
+                                 percent=f"{percent:.1f}",
+                                 downloaded=format_size(downloaded),
+                                 total=format_size(total))
+                else:
+                    # 没有总大小，显示不确定模式或已下载大小
+                    # 使用一个估算的进度（基于已下载的大小）
+                    # 假设文件大约在10-50MB之间，根据已下载大小估算
+                    estimated_total = max(downloaded * 2, 10 * 1024 * 1024)  # 至少10MB
+                    percent = min((downloaded / estimated_total) * 100, 95)  # 最多显示95%
+                    progress_var.set(percent)
+                    progress_bar['value'] = percent
+                    info_text = f"已下载: {format_size(downloaded)}"
+                
+                info_label.config(text=info_text)
+                # 强制更新进度条显示
+                progress_bar.update_idletasks()
+                dialog.update_idletasks()
+                dialog.update()  # 强制刷新对话框
+                
+            except Exception as e:
+                pass
+        
+        # 使用 after_idle 确保在主线程空闲时立即执行
+        dialog.after_idle(update_progress)
+    
+    # 在后台线程中下载
+    def download_thread():
+        try:
+            # 重置更新计数器
+            last_update_size[0] = 0
+            success, error = update_checker.download_file(download_url, temp_file, progress_callback)
+            
+            def update_ui():
+                if not success:
+                    status_label.config(text=t('update_download_failed'), fg='#cc0000')
+                    info_label.config(text=t('update_download_failed_msg', error=error))
+                    progress_bar.stop()
+                    progress_var.set(0)  # 重置进度条
+                    # 按钮保持隐藏，不再显示
+                    return
+                
+                # 下载成功，确保进度条显示100%
+                progress_var.set(100)
+                progress_bar.update_idletasks()
+                dialog.update_idletasks()
+                dialog.update()  # 强制刷新对话框
+                
+                if auto_install:
+                    # 下载成功，准备更新
+                    # 在后台线程中准备更新文件
+                    def prepare_thread():
+                        current_exe = sys.executable
+                        # version 参数已经在 download_update 函数的作用域中
+                        prepare_success, prepare_error = update_checker.prepare_update_for_restart(
+                            temp_file, current_exe, version, CURRENT_LANGUAGE
+                        )
+                        
+                        def prepare_result():
+                            if prepare_success:
+                                # 准备成功，显示重启提示弹窗
+                                update_dialog.destroy()  # 先关闭更新对话框
+                                
+                                # 创建重启提示弹窗（使用parent作为父窗口）
+                                restart_dialog = create_toplevel(parent)
+                                restart_dialog.title(t('update_prepared'))
+                                # 设置窗口图标
+                                set_window_icon(restart_dialog)
+                                restart_dialog.resizable(False, False)
+                                
+                                # 设置窗口图标（如果有）
+                                try:
+                                    restart_dialog.iconbitmap(default='')
+                                except:
+                                    pass
+                                
+                                # 居中显示
+                                restart_dialog.update_idletasks()
+                                width = 400
+                                height = 150
+                                x = (restart_dialog.winfo_screenwidth() // 2) - (width // 2)
+                                y = (restart_dialog.winfo_screenheight() // 2) - (height // 2)
+                                restart_dialog.geometry(f'{width}x{height}+{x}+{y}')
+                                
+                                # 主框架
+                                main_frame = tk.Frame(restart_dialog, bg='white')
+                                main_frame.pack(fill=tk.BOTH, expand=True, padx=20, pady=20)
+                                
+                                # 消息标签
+                                # 获取字体（尝试从主窗口获取，如果没有则使用默认值）
+                                try:
+                                    main_font = tk.font.nametofont('TkDefaultFont')
+                                    msg_font = (main_font.actual()['family'], 10)
+                                except:
+                                    msg_font = ('Microsoft YaHei', 10)
+                                
+                                msg_label = tk.Label(
+                                    main_frame, 
+                                    text=t('update_prepared_msg'),
+                                    font=msg_font,
+                                    bg='white',
+                                    fg='#333333',
+                                    wraplength=350,
+                                    justify='left'
+                                )
+                                msg_label.pack(pady=(0, 20))
+                                
+                                # 按钮框架
+                                button_frame = tk.Frame(main_frame, bg='white')
+                                button_frame.pack()
+                                
+                                def on_restart():
+                                    # 执行重启
+                                    restart_success, restart_error = update_checker.restart_with_update()
+                                    if restart_success:
+                                        # 延迟一下，确保批处理脚本已经启动
+                                        restart_dialog.after(500, lambda: (
+                                            restart_dialog.destroy(),
+                                            os._exit(0)
+                                        ))
+                                    else:
+                                        # 重启失败，显示错误
+                                        from tkinter import messagebox
+                                        messagebox.showerror(
+                                            t('update_install_restart_failed'),
+                                            t('update_install_restart_failed_msg', error=restart_error),
+                                            parent=restart_dialog
+                                        )
+                                
+                                # 立即重启软件按钮
+                                restart_button = ttk.Button(
+                                    button_frame,
+                                    text=t('update_restart_now'),
+                                    command=on_restart,
+                                    width=20
+                                )
+                                restart_button.pack()
+                                
+                                # 关闭窗口时也执行重启
+                                def on_close():
+                                    on_restart()
+                                
+                                restart_dialog.protocol("WM_DELETE_WINDOW", on_close)
+                                
+                            else:
+                                # 准备失败
+                                status_label.config(text=t('update_install_failed'), fg='#cc0000')
+                                info_label.config(text=t('update_install_failed_msg', error=prepare_error))
+                                progress_bar.stop()
+                                progress_var.set(0)
+                        
+                        dialog.after(0, prepare_result)
+                    
+                    # 启动准备线程
+                    prepare_thread_obj = threading.Thread(target=prepare_thread, daemon=True)
+                    prepare_thread_obj.start()
+                else:
+                    # 另存为模式：下载成功
+                    # 确保进度条显示100%
+                    progress_var.set(100)
+                    progress_bar.update_idletasks()
+                    dialog.update_idletasks()
+                    dialog.update()
+                    
+                    status_label.config(text=t('update_save_success'), fg='#00aa00')
+                    info_label.config(text=t('update_save_success_msg', path=temp_file))
+                    # 不要调用stop()，保持进度条显示100%
+                    # progress_bar.stop()  # 注释掉，保持显示100%
+                    
+                    # 2秒后自动关闭对话框
+                    dialog.after(2000, dialog.destroy)
+            
+            dialog.after(0, update_ui)
+            
+        except Exception as e:
+            def show_error():
+                status_label.config(text=t('update_download_failed'), fg='#cc0000')
+                info_label.config(text=t('update_download_failed_msg', error=str(e)))
+                progress_bar.stop()
+                progress_var.set(0)  # 重置进度条
+            dialog.after(0, show_error)
+    
+    thread = threading.Thread(target=download_thread, daemon=True)
+    thread.start()
+
+
+def show_donate_qrcode(parent=None):
+    """显示捐献二维码窗口"""
+    # 创建新窗口
+    parent_window = parent if parent else root
+    donate_window = create_toplevel(parent_window)
+    donate_window.title(t('donate_title'))
+    # 设置窗口图标
+    set_window_icon(donate_window)
+    donate_window.resizable(False, False)
+    if parent:
+        donate_window.transient(parent)
+        donate_window.grab_set()
+    
+    # 获取二维码图片路径
+    if getattr(sys, 'frozen', False):
+        base_path = sys._MEIPASS
+    else:
+        base_path = os.path.dirname(os.path.abspath(__file__))
+    
+    qrcode_path = os.path.join(base_path, 'qrcode.jpg')
+    
+    # 主容器
+    main_frame = tk.Frame(donate_window, bg='white', padx=30, pady=20)
+    main_frame.pack()
+    
+    # 左侧：二维码图片区域
+    left_frame = tk.Frame(main_frame, bg='white')
+    left_frame.pack(side=tk.LEFT, padx=(0, 20))
+    
+    # 获取字体族
+    global GUI_FONT_FAMILY
+    font_family = GUI_FONT_FAMILY if GUI_FONT_FAMILY else 'Microsoft YaHei UI'
+    
+    # 存储图片引用，避免被垃圾回收
+    image_refs = []
+    
+    # 加载并显示二维码
+    try:
+        if os.path.exists(qrcode_path):
+            # 尝试使用PIL加载JPG图片
+            try:
+                from PIL import Image, ImageTk
+                pil_image = Image.open(qrcode_path)
+                # 需要在正确的Tkinter窗口上下文中创建PhotoImage
+                qr_image = ImageTk.PhotoImage(pil_image, master=donate_window)
+                image_refs.append(qr_image)  # 保持引用
+                qr_label = tk.Label(left_frame, image=qr_image, bg='white')
+                qr_label.image = qr_image  # 保持引用
+                qr_label.pack()
+            except ImportError:
+                # 如果没有PIL，尝试使用PhotoImage（仅支持GIF/PNG）
+                from tkinter import PhotoImage
+                qr_image = PhotoImage(file=qrcode_path, master=donate_window)
+                image_refs.append(qr_image)  # 保持引用
+                qr_label = tk.Label(left_frame, image=qr_image, bg='white')
+                qr_label.image = qr_image  # 保持引用
+                qr_label.pack()
+        else:
+            error_label = tk.Label(left_frame, 
+                                 text='二维码图片未找到\nQR code image not found',
+                                 font=(font_family, 10),
+                                 bg='white', fg='red')
+            error_label.pack()
+    except Exception as e:
+        error_label = tk.Label(left_frame,
+                             text=f'加载图片失败\nFailed to load image: {e}',
+                             font=(font_family, 10),
+                             bg='white', fg='red')
+        error_label.pack()
+    
+    # 右侧：说明文字
+    right_frame = tk.Frame(main_frame, bg='white', width=300)
+    right_frame.pack(side=tk.LEFT, fill='both', expand=True)
+    
+    message_label = tk.Label(right_frame,
+                            text=t('donate_message'),
+                            font=(font_family, 11),
+                            bg='white', fg='#333333',
+                            justify='left',
+                            wraplength=280)
+    message_label.pack(anchor='nw', pady=(0, 20))
+    
+    # 关闭按钮
+    close_text = '关闭' if CURRENT_LANGUAGE == 'zh_CN' else 'Close'
+    close_button = ttk.Button(right_frame,
+                             text=close_text,
+                             command=donate_window.destroy,
+                             width=15)
+    close_button.pack(anchor='sw')
+    
+    # 居中显示
+    donate_window.update_idletasks()
+    width = donate_window.winfo_width()
+    height = donate_window.winfo_height()
+    x = (donate_window.winfo_screenwidth() // 2) - (width // 2)
+    y = (donate_window.winfo_screenheight() // 2) - (height // 2)
+    donate_window.geometry(f'{width}x{height}+{x}+{y}')
+    
+    donate_window.focus_set()
 
 def show_about(parent=None):
     """显示关于对话框，包含可点击的GitHub链接"""
@@ -1669,16 +3279,31 @@ def show_about(parent=None):
     
     if not root_window:
         # 如果找不到父窗口，使用messagebox作为后备方案
+        # 获取版本号
+        version_info = ""
+        if UPDATE_CHECKER_AVAILABLE:
+            try:
+                current_version = update_checker.get_current_version()
+                if current_version:
+                    if CURRENT_LANGUAGE == 'zh_CN':
+                        version_info = f"版本号：{current_version}\n\n"
+                    else:
+                        version_info = f"Version: {current_version}\n\n"
+            except:
+                pass
+        
         if CURRENT_LANGUAGE == 'zh_CN':
-            about_text = "交叉口交通流量流向可视化工具\nIntersection Traffic Flow Visualize\n\n版权所有 (C) \n\n本软件由 [江浦马保国] 开发，保留所有权利。\n欢迎复制、传播本软件。\n\nGitHub 仓库：\nhttps://github.com/chrisKLP-sys/intersection-traffic-flow"
+            about_text = f"交叉口交通流量流向可视化工具\nIntersection Traffic Flow Visualize\n\n{version_info}版权所有 (C) \n\n本软件由 [江浦马保国] 开发，保留所有权利。\n欢迎复制、传播本软件。\n\nGitee 仓库：\nhttps://gitee.com/Chris_KLP/intersection-traffic-flow\n\nGitHub 仓库：\nhttps://github.com/chrisKLP-sys/intersection-traffic-flow"
         else:
-            about_text = "Intersection Traffic Flow Visualization Tool\n\nCopyright (C) \n\nThis software is developed by [江浦马保国], all rights reserved.\nYou are welcome to copy and distribute this software.\n\nGitHub Repository:\nhttps://github.com/chrisKLP-sys/intersection-traffic-flow"
+            about_text = f"Intersection Traffic Flow Visualization Tool\n\n{version_info}Copyright (C) \n\nThis software is developed by [江浦马保国], all rights reserved.\nYou are welcome to copy and distribute this software.\n\nGitee Repository:\nhttps://gitee.com/Chris_KLP/intersection-traffic-flow\n\nGitHub Repository:\nhttps://github.com/chrisKLP-sys/intersection-traffic-flow"
         messagebox.showinfo(t('about'), about_text)
         return
     
     # 创建自定义对话框
-    about_dialog = tk.Toplevel(root_window)
+    about_dialog = create_toplevel(root_window)
     about_dialog.title(t('about'))
+    # 设置窗口图标
+    set_window_icon(about_dialog)
     about_dialog.resizable(False, False)
     about_dialog.transient(root_window)
     about_dialog.grab_set()
@@ -1697,15 +3322,37 @@ def show_about(parent=None):
                           text="交叉口交通流量流向可视化工具\nIntersection Traffic Flow Visualize",
                           font=(font_family, 12, 'bold'),
                           bg='white', fg='#333333')
-    title_label.pack(pady=(0, 15))
+    title_label.pack(pady=(0, 10))
+    
+    # 版本号
+    version_text = ""
+    if UPDATE_CHECKER_AVAILABLE:
+        try:
+            current_version = update_checker.get_current_version()
+            if current_version:
+                if CURRENT_LANGUAGE == 'zh_CN':
+                    version_text = f"版本号：{current_version}"
+                else:
+                    version_text = f"Version: {current_version}"
+        except:
+            pass
+    
+    if version_text:
+        version_label = tk.Label(main_frame,
+                                 text=version_text,
+                                 font=(font_family, 10),
+                                 bg='white', fg='#666666')
+        version_label.pack(pady=(0, 15))
     
     # 版权信息
     if CURRENT_LANGUAGE == 'zh_CN':
         copyright_text = "版权所有 (C)\n\n本软件由 [江浦马保国] 开发，保留所有权利。\n欢迎复制、传播本软件。"
+        gitee_label_text = "Gitee 仓库："
         github_label_text = "GitHub 仓库："
         email_label_text = "联系邮箱："
     else:
         copyright_text = "Copyright (C)\n\nThis software is developed by [江浦马保国], all rights reserved.\nYou are welcome to copy and distribute this software."
+        gitee_label_text = "Gitee Repository:"
         github_label_text = "GitHub Repository:"
         email_label_text = "Contact Email:"
     
@@ -1716,7 +3363,34 @@ def show_about(parent=None):
                                justify='left')
     copyright_label.pack(pady=(0, 15))
     
-    # GitHub链接框架
+    # Gitee链接框架（放在前面）
+    gitee_frame = tk.Frame(main_frame, bg='white')
+    gitee_frame.pack(pady=(0, 10))
+    
+    gitee_label = tk.Label(gitee_frame, 
+                           text=gitee_label_text,
+                           font=(font_family, 10),
+                           bg='white', fg='#666666')
+    gitee_label.pack(side=tk.LEFT)
+    
+    # 可点击的Gitee链接
+    gitee_url = "https://gitee.com/Chris_KLP/intersection-traffic-flow"
+    gitee_link_label = tk.Label(gitee_frame,
+                         text=gitee_url,
+                         font=(font_family, 10, 'underline'),
+                         bg='white', fg='#0066cc',
+                         cursor='hand2')
+    gitee_link_label.pack(side=tk.LEFT, padx=(5, 0))
+    
+    # 绑定Gitee点击事件
+    def open_gitee(event=None):
+        webbrowser.open(gitee_url)
+    
+    gitee_link_label.bind('<Button-1>', open_gitee)
+    gitee_link_label.bind('<Enter>', lambda e: gitee_link_label.config(fg='#004499'))
+    gitee_link_label.bind('<Leave>', lambda e: gitee_link_label.config(fg='#0066cc'))
+    
+    # GitHub链接框架（放在后面）
     github_frame = tk.Frame(main_frame, bg='white')
     github_frame.pack(pady=(0, 10))
     
@@ -1770,13 +3444,37 @@ def show_about(parent=None):
     email_link_label.bind('<Enter>', lambda e: email_link_label.config(fg='#004499'))
     email_link_label.bind('<Leave>', lambda e: email_link_label.config(fg='#0066cc'))
     
+    # 按钮框架
+    button_frame = tk.Frame(main_frame, bg='white')
+    button_frame.pack(pady=(10, 0))
+    
+    # 检查更新按钮（如果更新检查模块可用）
+    if UPDATE_CHECKER_AVAILABLE:
+        check_update_text = t('btn_check_update')
+        # 根据语言调整按钮宽度，英文文本较长需要更宽的按钮
+        button_width = 20 if CURRENT_LANGUAGE == 'en_US' else 15
+        check_update_button = ttk.Button(button_frame, 
+                                        text=check_update_text,
+                                        command=lambda: check_for_updates(root_window),
+                                        width=button_width)
+        check_update_button.pack(side=tk.LEFT, padx=(0, 10))
+    
+    # 捐献按钮
+    donate_text = t('btn_donate')
+    donate_button_width = 15 if CURRENT_LANGUAGE == 'zh_CN' else 15
+    donate_button = ttk.Button(button_frame,
+                              text=donate_text,
+                              command=lambda: show_donate_qrcode(root_window),
+                              width=donate_button_width)
+    donate_button.pack(side=tk.LEFT, padx=(0, 10))
+    
     # 关闭按钮
     close_text = '关闭' if CURRENT_LANGUAGE == 'zh_CN' else 'Close'
-    close_button = ttk.Button(main_frame, 
+    close_button = ttk.Button(button_frame, 
                              text=close_text,
                              command=about_dialog.destroy,
                              width=15)
-    close_button.pack(pady=(10, 0))
+    close_button.pack(side=tk.LEFT)
     
     # 居中显示
     about_dialog.update_idletasks()
@@ -2946,29 +4644,32 @@ def plot_traffic_flow(table_instance):
         plt.tight_layout()
         
         # 创建新的tkinter窗口来显示图形
-        plot_window = tk.Toplevel(root)
+        plot_window = create_toplevel(root)
         
         # 立即隐藏窗口，避免闪现
         plot_window.withdraw()
         # 先设置一个临时位置（屏幕外），避免在左上角闪现
         plot_window.geometry("1x1+-10000+-10000")
         
+        # 设置窗口图标
+        set_window_icon(plot_window)
+        
         if table_instance.file_name:
             # 去掉文件扩展名显示
             file_name = os.path.basename(table_instance.file_name)
             plot_title = os.path.splitext(file_name)[0]
         else:
-            plot_title = "交叉口交通流量流向可视化图"
+            plot_title = t('plot_title')
         plot_window.title(plot_title)
+        
+        # 先创建并pack工具栏框架（确保它占据底部空间）
+        toolbar_frame = tk.Frame(plot_window, bg='#f5f5f5', relief='flat', padx=10, pady=5)
+        toolbar_frame.pack(side=tk.BOTTOM, fill=tk.X)
         
         # 将matplotlib图形嵌入到tkinter窗口
         canvas = FigureCanvasTkAgg(fig, master=plot_window)
         canvas.draw()
         canvas.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=1)
-        
-        # 创建自定义工具栏，只包含导出按钮
-        toolbar_frame = tk.Frame(plot_window, bg='#f5f5f5', relief='flat', padx=10, pady=5)
-        toolbar_frame.pack(side=tk.BOTTOM, fill=tk.X)
         
         # 导出按钮
         def export_figure():
@@ -3057,22 +4758,23 @@ def plot_traffic_flow(table_instance):
     except Exception as e:
         messagebox.showerror(t('file_load_error'), t('draw_error', error=str(e)))
 
+# ==================== 界面构建与布局 ====================
+
 # 创建主窗口（先不显示）
-root = tk.Tk()
+root = create_window()
 root.title(t('app_title'))
 root.withdraw()  # 先隐藏窗口
 # 先设置一个临时位置（屏幕外），避免在左上角闪现
 root.geometry("1x1+-10000+-10000")
 
-# 设置现代化界面样式（必须在创建组件之前调用）
+# 设置现代化界面样式
 ui_font_family = setup_modern_style(root)
 
-# 将root保存到update_window_title函数中，以便函数可以访问
+# 将root保存到update_window_title函数中
 update_window_title.root = root
 
 # 加载配置文件
 config = load_config()
-# 设置语言
 if 'language' in config:
     set_language(config['language'])
 
@@ -3092,10 +4794,9 @@ num_entries = None
 initial_file = None
 
 if choice == 'load_file':
-    # 如果选择读取文件，调用文件选择对话框
+    # 如果选择读取文件
     initial_file = filedialog.askopenfilename(filetypes=[("Text Files", "*.txt"), ("All Files", "*.*")])
     if initial_file:
-        # 读取文件第一行，解析路数
         try:
             encodings = ['utf-8', 'gbk', 'gb2312', 'gb18030', 'latin1']
             first_line = None
@@ -3116,8 +4817,7 @@ if choice == 'load_file':
                         root.destroy()
                         exit()
                 else:
-                    # 如果未声明路数，允许继续，让load_data_from_file函数从数据推断
-                    num_entries = None  # 设置为None，让load_data_from_file函数处理
+                    num_entries = None 
             else:
                 messagebox.showerror(t('file_load_error'), t('file_read_error'))
                 root.destroy()
@@ -3132,21 +4832,42 @@ if choice == 'load_file':
 else:
     num_entries = choice
 
-# 创建表格（默认4路，如果从文件读取则使用文件中的路数，如果未声明则使用4路作为初始值）
-# 注意：如果num_entries为None，说明文件未声明路数，将在load_data_from_file中从数据推断
 if num_entries is None:
-    num_entries = 4  # 使用默认值，load_data_from_file会重新创建表格
-# 使用配置中的通行规则
+    num_entries = 4
+
 traffic_rule = config.get('traffic_rule', 'right')
+
+# 创建表格
 table = Table(root, num_entries=num_entries, traffic_rule=traffic_rule)
 table.pack()
-root.update()  # 确保表格显示
+
+# 创建按钮框架
+button_frame = tk.Frame(root, bg='#f5f5f5')
+button_frame.pack(side='bottom', pady=10)
+
+# 创建按钮
+btn_configs = [
+    ('new_file', t('btn_new_file'), on_new_file_click),
+    ('load', t('btn_load'), on_load_data_click),
+    ('clear_data', t('btn_clear_data'), on_clear_data_click),
+    ('save', t('btn_save'), on_save_data_click),
+    ('save_as', t('btn_save_as'), on_save_data_as_click),
+    ('plot', t('btn_draw'), lambda: plot_traffic_flow(table)),
+    ('help', t('btn_help'), show_help),
+    ('about', t('btn_about'), show_about)
+]
+
+for key, text, command in btn_configs:
+    btn = ttk.Button(button_frame, text=text, command=command)
+    btn.pack(side=tk.LEFT, padx=5)
+    _ui_components['buttons'][key] = btn
 
 # 如果从文件读取，加载数据
 if choice == 'load_file' and initial_file:
     success, new_table = load_data_from_file(initial_file, table, root)
     if success:
         table = new_table
+        _ui_components['table'] = new_table
 
 # 创建菜单栏
 menubar = tk.Menu(root)
@@ -3158,71 +4879,36 @@ menubar.add_cascade(label="Language / 语言", menu=language_menu)
 language_menu.add_radiobutton(label="简体中文", command=lambda: change_language('zh_CN'))
 language_menu.add_radiobutton(label="English", command=lambda: change_language('en_US'))
 
-# 创建按钮框架
-button_frame = tk.Frame(root, bg='#f5f5f5')
-button_frame.pack(pady=10)
-
-new_file_button = ttk.Button(button_frame, text=t('btn_new_file'), command=on_new_file_click)
-new_file_button.pack(side=tk.LEFT, padx=5)
-_ui_components['buttons']['new_file'] = new_file_button
-
-load_button = ttk.Button(button_frame, text=t('btn_load'), command=on_load_data_click)
-load_button.pack(side=tk.LEFT, padx=5)
-_ui_components['buttons']['load'] = load_button
-
-clear_data_button = ttk.Button(button_frame, text=t('btn_clear_data'), command=on_clear_data_click)
-clear_data_button.pack(side=tk.LEFT, padx=5)
-_ui_components['buttons']['clear_data'] = clear_data_button
-
-save_button = ttk.Button(button_frame, text=t('btn_save'), command=on_save_data_click)
-save_button.pack(side=tk.LEFT, padx=5)
-_ui_components['buttons']['save'] = save_button
-
-save_as_button = ttk.Button(button_frame, text=t('btn_save_as'), command=on_save_data_as_click)
-save_as_button.pack(side=tk.LEFT, padx=5)
-_ui_components['buttons']['save_as'] = save_as_button
-
-plot_button = ttk.Button(button_frame, text=t('btn_draw'), command=lambda: plot_traffic_flow(table))
-plot_button.pack(side=tk.LEFT, padx=5)
-_ui_components['buttons']['plot'] = plot_button
-
-help_button = ttk.Button(button_frame, text=t('btn_help'), command=show_help)
-help_button.pack(side=tk.LEFT, padx=5)
-_ui_components['buttons']['help'] = help_button
-
-about_button = ttk.Button(button_frame, text=t('btn_about'), command=show_about)
-about_button.pack(side=tk.LEFT, padx=5)
-_ui_components['buttons']['about'] = about_button
-
 # 保存引用
 _ui_components['table'] = table
 _ui_components['root'] = root
 
-# 显示主窗口并居中（在所有组件添加完成后）
+# 显示主窗口并居中
 root.deiconify()
-root.update_idletasks()  # 确保所有组件都布局完成
-root.update()  # 再次更新以确保尺寸计算准确
+root.update_idletasks()
+root.update()
 
-# 调整窗口大小以适应内容并居中
+# 调整窗口大小
 adjust_window_size(root)
 
-# 添加主窗口关闭事件处理，确保程序完全退出
+# 设置图标
+set_window_icon(root)
+root.after(50, lambda: set_window_icon(root))
+
+# 启动更新检查
+if UPDATE_CHECKER_AVAILABLE:
+    root.after(3000, auto_check_update_background)
+
+# 添加关闭事件
 def on_main_window_close():
-    """主窗口关闭时的清理函数"""
     try:
-        # 保存配置
         save_config()
-        # 关闭所有matplotlib图形
         plt.close('all')
-        # 停止事件循环
         root.quit()
-        # 销毁主窗口
         root.destroy()
     except:
         pass
     finally:
-        # 确保进程完全退出
-        # 使用os._exit强制退出，避免等待其他线程
         os._exit(0)
 
 root.protocol("WM_DELETE_WINDOW", on_main_window_close)

@@ -25,13 +25,10 @@ if os.path.exists(fonts_dir):
 if os.path.exists('app_icon.png'):
     datas_list.append(('app_icon.png', '.'))
 
-# 自动检测主文件
-main_files = ['交叉口交通流量流向可视化工具1.3.py', '交叉口交通流量流向可视化工具1.2.py', '交叉口流量绘制1.1.py', '交叉口流量绘制1.0.py', 'Alpha1.0.py']
-main_file = '交叉口交通流量流向可视化工具1.3.py'  # 默认值
-for file in main_files:
-    if os.path.exists(file):
-        main_file = file
-        break
+# 主程序文件
+main_file = '交叉口交通流量流向可视化工具.py'
+if not os.path.exists(main_file):
+    raise FileNotFoundError(f"主程序文件不存在: {main_file}")
 
 a = Analysis(
     [main_file],

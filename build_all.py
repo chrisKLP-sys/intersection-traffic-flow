@@ -250,8 +250,8 @@ def build_application():
     
     print(f"  检测到系统: {system} ({system_info['machine']})")
     
-    # 打包2.3.0版本
-    main_file = '交叉口交通流量流向可视化工具2.3.0.py'
+    # 主程序文件
+    main_file = '交叉口交通流量流向可视化工具.py'
     
     if not os.path.exists(main_file):
         print(f"  ❌ 未找到主程序文件: {main_file}")
@@ -259,7 +259,7 @@ def build_application():
     
     print(f"  使用主文件: {main_file}")
     
-    # 检查帮助文档是否存在（2.2版本需要中英文两个帮助文档）
+    # 检查帮助文档是否存在
     datas = []
     help_files = []
     
@@ -354,7 +354,7 @@ def build_application():
         '--clean',
         '--noconfirm',
         '--onefile',
-        '--name', '交叉口交通流量流向可视化工具2.3.0',
+        '--name', '交叉口交通流量流向可视化工具',
         main_file
     ]
     
@@ -586,9 +586,9 @@ def verify_build():
     system = platform.system()
     
     if system == 'Windows':
-        exe_path = os.path.join('dist', '交叉口交通流量流向可视化工具2.3.0.exe')
+        exe_path = os.path.join('dist', '交叉口交通流量流向可视化工具.exe')
     else:
-        exe_path = os.path.join('dist', '交叉口交通流量流向可视化工具2.3.0')
+        exe_path = os.path.join('dist', '交叉口交通流量流向可视化工具')
     
     # 只检查文件是否存在（比对文件名），不检查文件大小等详细信息
     if os.path.exists(exe_path):
@@ -673,8 +673,8 @@ def main():
     if not check_python_version():
         sys.exit(1)
     
-    # 打包2.3版本
-    main_file = '交叉口交通流量流向可视化工具2.3.0.py'
+    # 主程序文件
+    main_file = '交叉口交通流量流向可视化工具.py'
     
     if not os.path.exists(main_file):
         print(f"❌ 错误: 未找到主程序文件: {main_file}")

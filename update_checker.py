@@ -211,7 +211,29 @@ def get_current_version():
                 if match:
                     return f"{match.group(1)}.{match.group(2)}.{match.group(3)}"
         
-        # 不再从文件名推断，确保版本号来自文件版本信息或version_info.txt
+        # 方法3: 从Git标签读取（开发环境备用方法）
+        if not getattr(sys, 'frozen', False):
+            try:
+                import subprocess
+                script_dir = os.path.dirname(os.path.abspath(__file__))
+                # 尝试获取最新的Git标签
+                result = subprocess.run(
+                    ['git', 'describe', '--tags', '--abbrev=0'],
+                    cwd=script_dir,
+                    capture_output=True,
+                    text=True,
+                    timeout=2
+                )
+                if result.returncode == 0 and result.stdout.strip():
+                    tag = result.stdout.strip()
+                    # 移除'v'前缀，如 "v2.3.0" -> "2.3.0"
+                    version = tag.lstrip('vV')
+                    # 验证版本号格式
+                    if re.match(r'^\d+\.\d+\.\d+', version):
+                        return version
+            except (subprocess.TimeoutExpired, FileNotFoundError, subprocess.SubprocessError, Exception):
+                # Git不可用或出错，忽略
+                pass
         
     except Exception as e:
         print(f"获取版本号失败: {e}")
