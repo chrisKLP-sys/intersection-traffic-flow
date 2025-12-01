@@ -122,22 +122,39 @@ For more details, see the build configuration files:
 
 ```
 intersection-traffic-flow/
-├── main.py      # Main application
-├── build_all.py              # Build script
-├── requirements.txt          # Python dependencies
-├── setup_venv.py            # Virtual environment setup
+├── main.py                  # Main application entry
+├── dialogs.py               # Dialog windows and startup UI
+├── table_widget.py          # Main data table widget
+├── file_operations.py       # Data file load/save logic
+├── plotting.py              # Plot window and drawing orchestration
+├── drawing_utils.py         # Low-level matplotlib drawing helpers
+├── ui_utils.py              # Common UI utilities and styles
+├── update_checker.py        # Online update check (GitHub / Gitee)
+├── update_manager.py        # Update workflow and dialogs
+├── update_gitee_release.py  # Sync release info to Gitee
+├── config.py                # Config load/save helpers
+├── config.txt               # User configuration file
+├── i18n.py                  # Internationalization strings
+├── build_all.py             # Build script (PyInstaller)
+├── build_config.spec        # PyInstaller spec file
+├── version_info.txt         # Version source for build/update
+├── version_info.rc          # Windows version resource
+├── requirements.txt         # Python dependencies
+├── setup_venv.py            # Virtual environment helper
+├── README.md                # This file
+├── README_虚拟环境使用说明.md # Virtual environment usage guide (Chinese)
+├── CHANGELOG.md             # Changelog
 ├── 帮助文档_中文.html        # Help documentation (Chinese)
 ├── 帮助文档_English.html    # Help documentation (English)
-├── README.md                # This file
-├── LICENSE                  # MIT License
-├── .gitignore              # Git ignore file
-├── build/                   # Build output (ignored)
-├── dist/                    # Distribution output (ignored)
-└── test_data/              # Sample data files
-    ├── 测试数据_3路.txt
-    ├── 测试数据_4路.txt
-    ├── 测试数据_5路.txt
-    └── 测试数据_6路.txt
+├── fonts/                   # Font files (HarmonyOS Sans etc.)
+│   ├── HarmonyOS_Sans_SC_*.ttf
+│   └── SourceHanSansCN-Regular.otf
+├── Sparrow.ico              # Application icon (ICO)
+├── Sparrow.png              # Application icon (PNG)
+├── 测试数据_3路.txt          # Sample data (3-leg intersection)
+├── 测试数据_4路.txt          # Sample data (4-leg intersection)
+├── 测试数据_5路.txt          # Sample data (5-leg intersection)
+└── 测试数据_6路.txt          # Sample data (6-leg intersection)
 ```
 
 ### Export Formats
@@ -174,6 +191,12 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 ### License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+This project also depends on several third‑party libraries and free fonts. Their licenses are provided by their own projects; please refer to their official pages for details and comply with the corresponding terms, for example:
+
+- matplotlib, numpy, Pillow, PyInstaller, ttkbootstrap, CairoSVG, ReportLab, svglib and other Python libraries used in this project.
+- HarmonyOS Sans SC (Huawei), used as the main UI font.
+- Source Han Sans (Adobe / Google), used as a fallback / alternative CJK font.
 
 ### Author
 
@@ -305,22 +328,39 @@ python build_all.py
 
 ```
 intersection-traffic-flow/
-├── main.py      # 主程序
-├── build_all.py              # 构建脚本
-├── requirements.txt          # Python依赖
-├── setup_venv.py            # 虚拟环境设置
+├── main.py                  # 主程序入口
+├── dialogs.py               # 各类对话框与启动界面 UI
+├── table_widget.py          # 主界面数据表格
+├── file_operations.py       # 数据文件读写与解析
+├── plotting.py              # 绘图窗口与整体绘制逻辑
+├── drawing_utils.py         # 底层 matplotlib 绘图工具
+├── ui_utils.py              # 通用 UI 工具与样式
+├── update_checker.py        # 联机检查更新（GitHub / Gitee）
+├── update_manager.py        # 更新流程与更新对话框
+├── update_gitee_release.py  # 发布信息同步到 Gitee
+├── config.py                # 配置加载与保存辅助
+├── config.txt               # 用户配置文件
+├── i18n.py                  # 多语言文案定义
+├── build_all.py             # 一键打包脚本（PyInstaller）
+├── build_config.spec        # PyInstaller 配置文件
+├── version_info.txt         # 版本号真源，用于构建与更新
+├── version_info.rc          # Windows 版本资源
+├── requirements.txt         # Python 依赖列表
+├── setup_venv.py            # 虚拟环境辅助脚本
+├── README.md                # 本说明文件
+├── README_虚拟环境使用说明.md # 虚拟环境使用说明
+├── CHANGELOG.md             # 版本更新记录
 ├── 帮助文档_中文.html        # 中文帮助文档
 ├── 帮助文档_English.html    # 英文帮助文档
-├── README.md                # 本文件
-├── LICENSE                  # MIT许可证
-├── .gitignore              # Git忽略文件
-├── build/                   # 构建输出（已忽略）
-├── dist/                    # 分发输出（已忽略）
-└── test_data/              # 示例数据文件
-    ├── 测试数据_3路.txt
-    ├── 测试数据_4路.txt
-    ├── 测试数据_5路.txt
-    └── 测试数据_6路.txt
+├── fonts/                   # 字体文件（HarmonyOS Sans 等）
+│   ├── HarmonyOS_Sans_SC_*.ttf
+│   └── SourceHanSansCN-Regular.otf
+├── Sparrow.ico              # 程序图标（ICO）
+├── Sparrow.png              # 程序图标（PNG）
+├── 测试数据_3路.txt          # 示例数据（3 路交叉口）
+├── 测试数据_4路.txt          # 示例数据（4 路交叉口）
+├── 测试数据_5路.txt          # 示例数据（5 路交叉口）
+└── 测试数据_6路.txt          # 示例数据（6 路交叉口）
 ```
 
 ### 导出格式
@@ -367,6 +407,12 @@ intersection-traffic-flow/
 - 基于 [matplotlib](https://matplotlib.org/) 构建
 - 由 [numpy](https://numpy.org/) 提供支持
 - 使用 [PyInstaller](https://www.pyinstaller.org/) 打包
+- 使用 [Pillow](https://python-pillow.org/)、[ttkbootstrap](https://github.com/israel-dryer/ttkbootstrap) 等第三方库优化界面与图形
+- 使用 [CairoSVG](https://cairosvg.org/)、[ReportLab](https://www.reportlab.com/)、[svglib](https://pypi.org/project/svglib/) 等库支持多格式导出
+- 使用 [HarmonyOS Sans](https://developer.huawei.com/consumer/cn/design/resource/) / HarmonyOS Sans SC 作为主要界面字体
+- 使用 [思源黑体 / Source Han Sans](https://github.com/adobe-fonts/source-han-sans) 作为中文备用字体
+
+上述第三方库与字体均遵循其各自的开源或免费使用许可协议（如 MIT / BSD / GPL with exception / SIL OFL 等），本项目仅在其许可范围内使用，相关权利归原作者及其项目所有。
 
 ---
 
