@@ -26,7 +26,7 @@ if os.path.exists('app_icon.png'):
     datas_list.append(('app_icon.png', '.'))
 
 # 主程序文件
-main_file = '交叉口交通流量流向可视化工具.py'
+main_file = 'main.py'
 if not os.path.exists(main_file):
     raise FileNotFoundError(f"主程序文件不存在: {main_file}")
 

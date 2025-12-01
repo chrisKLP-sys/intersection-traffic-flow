@@ -12,6 +12,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.4.0] - 2025-12-01
+
+**🎉 New Features / 新功能**
+
+### Added / 新增
+
+- Light UI polishing: Startup dialog and main window buttons now share unified colors and styles.
+  - 界面轻度美化：启动界面与主窗口按钮配色和样式统一，对话框显示过程优化以减少闪烁。
+- Custom annotation font size in plotting window: Road name and flow label font sizes can be adjusted, with redraw and one-click reset support.
+  - 绘图界面支持自定义标注文字大小：可单独调整路名字号和流量字号，支持重绘和一键重置字号。
+
+### Improved / 改进
+
+- Unified font across the application using HarmonyOS Sans for a more consistent visual appearance.
+  - 全局统一字体为 HarmonyOS Sans，界面观感更加一致。
+
+---
+
 ## [2.3.0] - 2025-11-25
 
 **🎉 New Features / 新功能**

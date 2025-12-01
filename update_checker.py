@@ -104,7 +104,7 @@ def get_github_token():
 def get_file_version(file_path):
     """
     从文件版本信息中获取版本号
-    返回: 版本号字符串，如 "2.3.0"，如果获取失败返回 None
+    返回: 版本号字符串，如 "2.4.0"，如果获取失败返回 None
     """
     try:
         if platform.system() == 'Windows' and os.path.exists(file_path):
@@ -176,7 +176,7 @@ def get_file_version(file_path):
 def get_current_version():
     """
     获取当前程序版本号
-    返回格式: "2.3.0" 或 None（如果无法获取）
+    返回格式: "2.4.0" 或 None（如果无法获取）
     优先从文件版本信息中获取，不从文件名推断
     """
     try:

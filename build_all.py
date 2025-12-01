@@ -251,7 +251,7 @@ def build_application():
     print(f"  检测到系统: {system} ({system_info['machine']})")
     
     # 主程序文件
-    main_file = '交叉口交通流量流向可视化工具.py'
+    main_file = 'main.py'
     
     if not os.path.exists(main_file):
         print(f"  ❌ 未找到主程序文件: {main_file}")
@@ -674,7 +674,7 @@ def main():
         sys.exit(1)
     
     # 主程序文件
-    main_file = '交叉口交通流量流向可视化工具.py'
+    main_file = 'main.py'
     
     if not os.path.exists(main_file):
         print(f"❌ 错误: 未找到主程序文件: {main_file}")
